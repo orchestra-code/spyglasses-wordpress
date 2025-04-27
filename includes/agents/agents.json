@@ -1,0 +1,26 @@
+{
+  "version": "1.0.0",
+  "patterns": [
+    {
+      "pattern": "Perplexity-User\\/[0-9]",
+      "url": "https://docs.perplexity.ai/guides/bots",
+      "instances": [
+        "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Perplexity-User/1.0; +https://perplexity.ai/perplexity-user)"
+      ]
+    },
+    {
+      "pattern": "Claude-User\\/[0-9]",
+      "url": "https://support.anthropic.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler",
+      "instances": [
+        "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; Claude-User/1.0; +https://anthropic.com/claude"
+      ]
+    },
+    {
+      "pattern": "Claude-SearchBot\\/[0-9]",
+      "url": "https://support.anthropic.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler",
+      "instances": [
+        "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; Claude-SearchBot/1.0; +https://anthropic.com/claude"
+      ]
+    }
+  ]
+} 
