@@ -260,7 +260,7 @@ class Spyglasses {
                 'response_status' => $status_code,
                 'response_time_ms' => $response_time,
                 'headers' => $this->get_headers(),
-                'timestamp' => gmdate('c')
+                'timestamp' => gmdate('Y-m-d\TH:i:s\Z')
             ]
         ]);
         
@@ -285,7 +285,7 @@ class Spyglasses {
                 'response_status' => $status_code,
                 'response_time_ms' => $response_time,
                 'headers' => $this->get_headers(),
-                'timestamp' => gmdate('c')
+                'timestamp' => gmdate('Y-m-d\TH:i:s\Z')
             ]),
             'cookies' => array()
         ));
