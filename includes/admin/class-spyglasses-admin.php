@@ -28,6 +28,12 @@ class Spyglasses_Admin {
         
         // Handle manual pattern sync
         add_action('admin_init', array($this, 'handle_manual_pattern_sync'));
+
+        // Add this debugging code temporarily
+        add_action('spyglasses_before_api_request', function($url, $args) {
+            error_log('Spyglasses API request: ' . $url);
+            error_log('Payload: ' . json_encode($args['body']));
+        }, 10, 2);
     }
 
     /**
@@ -267,7 +273,7 @@ class Spyglasses_Admin {
                     <img src="<?php echo SPYGLASSES_PLUGIN_URL; ?>assets/images/spyglasses-logo.png" alt="Spyglasses Logo" onerror="this.style.display='none'">
                 </div>
                 <div class="spyglasses-header-actions">
-                    <a href="https://www.spyglasses.io/dashboard" target="_blank" class="button button-secondary">
+                    <a href="https://www.spyglasses.io/app" target="_blank" class="button button-secondary">
                         <?php _e('Go to Dashboard', 'spyglasses'); ?>
                     </a>
                     <a href="https://www.spyglasses.io/docs" target="_blank" class="button button-secondary">

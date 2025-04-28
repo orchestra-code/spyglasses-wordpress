@@ -234,39 +234,72 @@ class Spyglasses {
      * @param array $bot_info Information about the bot
      */
     private function log_bot_visit($user_agent, $bot_info) {
+        // Start timing the response
+        $start_time = microtime(true);
+        
         // Prepare payload
         $url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
         
-        $payload = array(
-            'url' => $url,
-            'user_agent' => $user_agent,
-            'ip_address' => $this->get_client_ip(),
-            'request_method' => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET',
-            'request_path' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/',
-            'request_query' => isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : '',
-            'headers' => $this->get_headers(),
-            'response_status' => 200,
-            'response_time_ms' => 0,
-            'timestamp' => gmdate('c'),
-            'agent_metadata' => $this->get_agent_metadata($bot_info),
-        );
-
+        // Get HTTP status code 
+        $status_code = http_response_code();
+        if (!$status_code) $status_code = 200; // Default to 200 if not set
+        
+        // Calculate response time in milliseconds
+        $response_time = (microtime(true) - $start_time) * 1000;
+        
+        do_action('spyglasses_before_api_request', SPYGLASSES_COLLECTOR_ENDPOINT, [
+            'method' => 'POST',
+            'body' => [
+                'url' => $url,
+                'user_agent' => $user_agent,
+                'ip_address' => $this->get_client_ip(),
+                'request_method' => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET',
+                'request_path' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/',
+                'request_query' => isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : '',
+                'request_body' => '', // Add empty request body
+                'response_status' => $status_code,
+                'response_time_ms' => $response_time,
+                'headers' => $this->get_headers(),
+                'timestamp' => gmdate('c')
+            ]
+        ]);
+        
         // Send the data to the collector
         $response = wp_remote_post(SPYGLASSES_COLLECTOR_ENDPOINT, array(
             'timeout' => 5,
             'redirection' => 5,
             'httpversion' => '1.1',
-            'blocking' => false,
+            'blocking' => $this->debug_mode, // Only block for response if debug mode is on
             'headers' => array(
                 'Content-Type' => 'application/json',
                 'x-api-key' => $this->api_key
             ),
-            'body' => json_encode($payload),
+            'body' => json_encode([
+                'url' => $url,
+                'user_agent' => $user_agent,
+                'ip_address' => $this->get_client_ip(),
+                'request_method' => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET',
+                'request_path' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/',
+                'request_query' => isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : '',
+                'request_body' => '', // Add empty request body
+                'response_status' => $status_code,
+                'response_time_ms' => $response_time,
+                'headers' => $this->get_headers(),
+                'timestamp' => gmdate('c')
+            ]),
             'cookies' => array()
         ));
 
-        if ($this->debug_mode && is_wp_error($response)) {
-            error_log('Spyglasses collector error: ' . $response->get_error_message());
+        if ($this->debug_mode) {
+            if (is_wp_error($response)) {
+                error_log('Spyglasses collector error: ' . $response->get_error_message());
+            } else {
+                $code = wp_remote_retrieve_response_code($response);
+                $body = wp_remote_retrieve_body($response);
+                if ($code >= 400) {
+                    error_log("Spyglasses API error (HTTP $code): $body");
+                }
+            }
         }
     }
 
