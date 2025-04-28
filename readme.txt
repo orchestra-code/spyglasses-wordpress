@@ -65,6 +65,16 @@ Yes, Spyglasses works with most caching plugins as it operates at the WordPress 
 
 By default, Spyglasses automatically syncs agent detection patterns daily from our API. This ensures you always have the latest patterns for new AI agents. You can also manually sync patterns from the settings page or disable automatic syncing if you prefer.
 
+= How do I troubleshoot issues with Spyglasses? =
+
+If you encounter problems (such as sync errors), enable "Debug Mode" in the Spyglasses settings page. This will log detailed error messages to your WordPress error log (usually at wp-content/debug.log).
+
+To ensure logging works, add these lines to your wp-config.php if they are not already present:
+define('WP_DEBUG', true);
+define('WP_DEBUG_LOG', true);
+
+After reproducing the issue, check the debug.log file for messages starting with "Spyglasses:" and share them with support if needed.
+
 == Screenshots ==
 
 1. Spyglasses settings page

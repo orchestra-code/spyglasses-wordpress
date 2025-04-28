@@ -138,48 +138,65 @@ class Spyglasses {
      * Update agent patterns from the remote API
      */
     public function update_agent_patterns() {
-        // Skip if no API key
         if (empty($this->api_key)) {
-            return;
+            if ($this->debug_mode) {
+                error_log('Spyglasses: No API key set for pattern sync.');
+            }
+            return 'No API key set for pattern sync.';
         }
-        
+    
         $response = wp_remote_get($this->patterns_endpoint, array(
             'timeout' => 10,
             'headers' => array(
                 'x-api-key' => $this->api_key
             )
         ));
-        
-        if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
-            $body = wp_remote_retrieve_body($response);
-            $patterns = json_decode($body, true);
-            
-            if (is_array($patterns) && isset($patterns['patterns'])) {
-                // Save the updated patterns to cache
-                $this->agent_patterns = $patterns;
-                set_transient('spyglasses_agent_patterns', $patterns, DAY_IN_SECONDS);
-                
-                // Also update the local file for fallback
-                $agents_file = SPYGLASSES_PLUGIN_DIR . 'includes/agents/agents.json';
-                @file_put_contents($agents_file, $body);
-                
-                // Update last sync time
-                update_option('spyglasses_last_pattern_sync', time());
-                
-                if ($this->debug_mode) {
-                    error_log('Spyglasses: Agent patterns updated successfully');
-                }
-                
-                return true;
-            }
-        } else {
+    
+        if (is_wp_error($response)) {
+            $msg = 'WP_Error during pattern sync: ' . $response->get_error_message();
             if ($this->debug_mode) {
-                $error_message = is_wp_error($response) ? $response->get_error_message() : 'Unknown error';
-                error_log('Spyglasses: Error updating agent patterns: ' . $error_message);
+                error_log('Spyglasses: ' . $msg);
             }
+            return $msg;
         }
-        
-        return false;
+    
+        $code = wp_remote_retrieve_response_code($response);
+        $body = wp_remote_retrieve_body($response);
+    
+        if ($code !== 200) {
+            $msg = "Pattern sync HTTP error $code: $body";
+            if ($this->debug_mode) {
+                error_log('Spyglasses: ' . $msg);
+            }
+            return $msg;
+        }
+    
+        $patterns = json_decode($body, true);
+    
+        if (!is_array($patterns) || !isset($patterns['patterns'])) {
+            $msg = 'Invalid pattern response: ' . $body;
+            if ($this->debug_mode) {
+                error_log('Spyglasses: ' . $msg);
+            }
+            return $msg;
+        }
+    
+        // Save the updated patterns to cache
+        $this->agent_patterns = $patterns;
+        set_transient('spyglasses_agent_patterns', $patterns, DAY_IN_SECONDS);
+    
+        // Also update the local file for fallback
+        $agents_file = SPYGLASSES_PLUGIN_DIR . 'includes/agents/agents.json';
+        @file_put_contents($agents_file, $body);
+    
+        // Update last sync time
+        update_option('spyglasses_last_pattern_sync', time());
+    
+        if ($this->debug_mode) {
+            error_log('Spyglasses: Agent patterns updated successfully');
+        }
+    
+        return true;
     }
 
     /**

@@ -40,13 +40,16 @@ class Spyglasses_Admin {
      * Add admin menu
      */
     public function add_admin_menu() {
-        add_options_page(
+        add_menu_page(
             __('Spyglasses', 'spyglasses'),
             __('Spyglasses', 'spyglasses'),
             'manage_options',
             'spyglasses',
-            array($this, 'render_settings_page')
+            array($this, 'render_settings_page'),
+            'data:image/svg+xml;base64,' . base64_encode(file_get_contents(SPYGLASSES_PLUGIN_DIR . 'assets/images/spyglasses-icon.svg')),
+            60
         );
+        remove_submenu_page('spyglasses', 'spyglasses');
     }
 
     /**
@@ -106,7 +109,7 @@ class Spyglasses_Admin {
         echo '<p>';
         echo sprintf(
             __('Spyglasses helps you detect and monitor AI agents and bots that visit your site. Sign up for an account at %s to get your API key.', 'spyglasses'),
-            '<a href="https://www.spyglasses.io" target="_blank">spyglasses.io</a>'
+            '<a href="https://www.spyglasses.io?ref=wp-plugin" target="_blank">spyglasses.io</a>'
         );
         echo '</p>';
     }
@@ -126,7 +129,7 @@ class Spyglasses_Admin {
             echo '<p class="description" style="color: #d63638;">';
             echo sprintf(
                 __('No API key set. Please sign up at %s to get your API key.', 'spyglasses'),
-                '<a href="https://www.spyglasses.io" target="_blank">spyglasses.io</a>'
+                '<a href="https://www.spyglasses.io?ref=wp-plugin" target="_blank">spyglasses.io</a>'
             );
             echo '</p>';
         }
@@ -192,6 +195,9 @@ class Spyglasses_Admin {
         echo '<input type="checkbox" id="spyglasses_debug_mode" name="spyglasses_debug_mode" value="yes" ' . checked('yes', $debug_mode, false) . ' />';
         echo __('Enable debug mode (logs errors to WordPress error log)', 'spyglasses');
         echo '</label>';
+        echo '<p class="description">';
+        echo __('If you encounter issues, enable debug mode and check <code>wp-content/debug.log</code> for details. Make sure <code>WP_DEBUG</code> and <code>WP_DEBUG_LOG</code> are enabled in <code>wp-config.php</code>.', 'spyglasses');
+        echo '</p>';
     }
     
     /**
@@ -246,13 +252,18 @@ class Spyglasses_Admin {
         }
         
         $spyglasses = new Spyglasses();
-        $success = $spyglasses->update_agent_patterns();
+        $spyglasses->init();
+        $result = $spyglasses->update_agent_patterns();
         
-        if ($success) {
+        if ($result === true) {
             update_option('spyglasses_last_pattern_sync', time());
             add_settings_error('spyglasses', 'sync-success', __('Agent patterns synced successfully.', 'spyglasses'), 'success');
         } else {
-            add_settings_error('spyglasses', 'sync-error', __('Failed to sync agent patterns. Please check your API key and try again.', 'spyglasses'), 'error');
+            $error_message = __('Failed to sync agent patterns. Please check your API key and try again.', 'spyglasses');
+            if (!empty($result) && is_string($result)) {
+                $error_message .= ' Debug: ' . esc_html($result);
+            }
+            add_settings_error('spyglasses', 'sync-error', $error_message, 'error');
         }
     }
 
@@ -270,13 +281,13 @@ class Spyglasses_Admin {
             
             <div class="spyglasses-admin-header">
                 <div class="spyglasses-logo">
-                    <img src="<?php echo SPYGLASSES_PLUGIN_URL; ?>assets/images/spyglasses-logo.png" alt="Spyglasses Logo" onerror="this.style.display='none'">
+                    <img src="<?php echo SPYGLASSES_PLUGIN_URL; ?>assets/images/spyglasses-logo.webp" alt="Spyglasses Logo" onerror="this.style.display='none'">
                 </div>
                 <div class="spyglasses-header-actions">
-                    <a href="https://www.spyglasses.io/app" target="_blank" class="button button-secondary">
+                    <a href="https://www.spyglasses.io/app?ref=wp-plugin" target="_blank" class="button button-secondary">
                         <?php _e('Go to Dashboard', 'spyglasses'); ?>
                     </a>
-                    <a href="https://www.spyglasses.io/docs" target="_blank" class="button button-secondary">
+                    <a href="https://www.spyglasses.io/docs?ref=wp-plugin" target="_blank" class="button button-secondary">
                         <?php _e('Documentation', 'spyglasses'); ?>
                     </a>
                 </div>
@@ -306,7 +317,7 @@ class Spyglasses_Admin {
                 <p>
                     <?php echo sprintf(
                         __('Don\'t have an account yet? %sSign up for Spyglasses%s to get started.', 'spyglasses'),
-                        '<a href="https://www.spyglasses.io" target="_blank">', '</a>'
+                        '<a href="https://www.spyglasses.io?ref=wp-plugin" target="_blank">', '</a>'
                     ); ?>
                 </p>
             </div>
