@@ -3,7 +3,7 @@ Contributors: orchestraai
 Tags: bot detection, ai detection, security, analytics, claude, perplexity
 Requires at least: 5.0
 Tested up to: 6.4
-Stable tag: 0.1.0
+Stable tag: 0.2.0
 Requires PHP: 7.2
 License: MIT
 License URI: https://opensource.org/licenses/MIT
@@ -18,6 +18,8 @@ Spyglasses provides advanced detection for AI agents and bots that visit your Wo
 
 * **AI Agent Detection**: Automatically detect traffic from AI browsing assistants
 * **Real-time Monitoring**: Track and monitor AI agent visits to your site
+* **Bot Blocking**: Selectively block specific AI agents or entire categories of bots
+* **AI Model Trainer Protection**: Prevent AI systems from scraping your content for model training
 * **Dashboard Insights**: View detailed analytics on AI traffic via the Spyglasses dashboard
 * **Lightweight**: Minimal impact on site performance and user experience
 * **Easy Setup**: Simple configuration with just an API key
@@ -25,7 +27,7 @@ Spyglasses provides advanced detection for AI agents and bots that visit your Wo
 
 ### How It Works
 
-Spyglasses uses pattern recognition to identify AI agents and bots visiting your site. When an AI agent is detected, information about the visit is securely sent to the Spyglasses collector for analysis and reporting.
+Spyglasses uses pattern recognition to identify AI agents and bots visiting your site. When an AI agent is detected, information about the visit is securely sent to the Spyglasses collector for analysis and reporting. You can also choose to block specific types of bots from accessing your site.
 
 ### Privacy & Transparency
 
@@ -38,6 +40,7 @@ Spyglasses only collects information about bot and AI agent traffic, not about y
 3. Go to Settings > Spyglasses to configure the plugin
 4. Enter your Spyglasses API key
 5. That's it! Spyglasses will now detect and monitor AI agent traffic to your site
+6. Optionally, configure blocking rules to prevent specific bots from accessing your content
 
 == Frequently Asked Questions ==
 
@@ -56,6 +59,10 @@ Spyglasses only collects information about bot and AI agent traffic, including u
 = How can I see the data collected? =
 
 You can view all data collected in your Spyglasses dashboard. Log in to your account at [spyglasses.io](https://www.spyglasses.io) to access your dashboard.
+
+= How does bot blocking work? =
+
+You can block bots at several levels: globally (all AI model trainers), by category, by subcategory, by bot type, or by specific pattern. Blocked bots receive a 403 Forbidden response. The plugin tracks both allowed and blocked bot visits.
 
 = Is this compatible with caching plugins? =
 
@@ -80,8 +87,18 @@ After reproducing the issue, check the debug.log file for messages starting with
 1. Spyglasses settings page
 2. Spyglasses dashboard overview
 3. AI agent detection in action
+4. Bot blocking configuration
 
 == Changelog ==
+
+= 0.2.0 =
+* Added bot blocking functionality
+* Added option to block AI model trainers
+* Added customizable block/allow lists for bots
+* Added hierarchical view of bot patterns by category
+* Added search functionality for bot patterns
+* Improved logging to track blocked requests
+* Updated pattern sync to include additional bot metadata
 
 = 0.1.0 =
 * Initial plugin release
@@ -89,6 +106,9 @@ After reproducing the issue, check the debug.log file for messages starting with
 * Added manual sync option in settings
 
 == Upgrade Notice ==
+
+= 0.2.0 =
+This update adds bot blocking functionality to prevent unwanted AI agents and bots from accessing your site.
 
 = 0.1.0 =
 Initial plugin release 

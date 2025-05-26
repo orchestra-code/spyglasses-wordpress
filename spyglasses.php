@@ -50,6 +50,9 @@ function spyglasses_activate() {
     // Initialize default settings
     add_option('spyglasses_api_key', '');
     add_option('spyglasses_debug_mode', 'no');
+    add_option('spyglasses_block_ai_model_trainers', 'no');
+    add_option('spyglasses_custom_blocks', '[]');
+    add_option('spyglasses_custom_allows', '[]');
     
     // Schedule the pattern update event
     if (!wp_next_scheduled('spyglasses_update_patterns')) {
@@ -84,6 +87,10 @@ function spyglasses_uninstall() {
     // Remove plugin settings
     delete_option('spyglasses_api_key');
     delete_option('spyglasses_debug_mode');
+    delete_option('spyglasses_auto_sync_patterns');
+    delete_option('spyglasses_block_ai_model_trainers');
+    delete_option('spyglasses_custom_blocks');
+    delete_option('spyglasses_custom_allows');
     
     // Remove transient cache
     delete_transient('spyglasses_agent_patterns');

@@ -61,6 +61,15 @@ class Spyglasses_Admin {
         register_setting('spyglasses_settings', 'spyglasses_auto_sync_patterns', array(
             'default' => 'yes'
         ));
+        register_setting('spyglasses_settings', 'spyglasses_block_ai_model_trainers', array(
+            'default' => 'no'
+        ));
+        register_setting('spyglasses_settings', 'spyglasses_custom_blocks', array(
+            'default' => array()
+        ));
+        register_setting('spyglasses_settings', 'spyglasses_custom_allows', array(
+            'default' => array()
+        ));
         
         add_settings_section(
             'spyglasses_main_section',
@@ -99,6 +108,30 @@ class Spyglasses_Admin {
             array($this, 'render_debug_mode_field'),
             'spyglasses',
             'spyglasses_main_section'
+        );
+        
+        // Add Blocking Section
+        add_settings_section(
+            'spyglasses_blocking_section',
+            __('Bot Blocking Settings', 'spyglasses'),
+            array($this, 'render_blocking_section'),
+            'spyglasses'
+        );
+        
+        add_settings_field(
+            'spyglasses_block_ai_model_trainers',
+            __('Block AI Model Trainers', 'spyglasses'),
+            array($this, 'render_block_ai_model_trainers_field'),
+            'spyglasses',
+            'spyglasses_blocking_section'
+        );
+        
+        add_settings_field(
+            'spyglasses_pattern_blocking',
+            __('Custom Blocking Rules', 'spyglasses'),
+            array($this, 'render_pattern_blocking_field'),
+            'spyglasses',
+            'spyglasses_blocking_section'
         );
     }
 
@@ -392,5 +425,529 @@ class Spyglasses_Admin {
         $settings_link = '<a href="' . admin_url('options-general.php?page=spyglasses') . '">' . __('Settings', 'spyglasses') . '</a>';
         array_unshift($links, $settings_link);
         return $links;
+    }
+
+    /**
+     * Render blocking section
+     */
+    public function render_blocking_section() {
+        echo '<p>';
+        echo __('Configure which bots and AI agents to block from accessing your site. Blocked requests will receive a 403 Forbidden response.', 'spyglasses');
+        echo '</p>';
+    }
+    
+    /**
+     * Render block AI model trainers field
+     */
+    public function render_block_ai_model_trainers_field() {
+        $block_ai_model_trainers = get_option('spyglasses_block_ai_model_trainers', 'no');
+        
+        echo '<label>';
+        echo '<input type="checkbox" id="spyglasses_block_ai_model_trainers" name="spyglasses_block_ai_model_trainers" value="yes" ' . checked('yes', $block_ai_model_trainers, false) . ' />';
+        echo __('Block AI model trainers (e.g. agents that collect data to train AI models)', 'spyglasses');
+        echo '</label>';
+        echo '<p class="description">';
+        echo __('When enabled, AI agents that are known to collect data for training AI models will be blocked with a 403 Forbidden response.', 'spyglasses');
+        echo '</p>';
+    }
+    
+    /**
+     * Render pattern blocking field
+     */
+    public function render_pattern_blocking_field() {
+        $patterns = $this->get_patterns_hierarchy();
+        
+        if (empty($patterns)) {
+            echo '<p class="description">';
+            echo __('No patterns available. Please sync patterns first.', 'spyglasses');
+            echo '</p>';
+            return;
+        }
+        
+        $custom_blocks = get_option('spyglasses_custom_blocks', array());
+        $custom_allows = get_option('spyglasses_custom_allows', array());
+        
+        echo '<div class="spyglasses-patterns-wrapper">';
+        echo '<div class="spyglasses-tabs">';
+        echo '<button type="button" class="spyglasses-tab active" data-tab="categories">' . __('By Category', 'spyglasses') . '</button>';
+        echo '<button type="button" class="spyglasses-tab" data-tab="patterns">' . __('By Pattern', 'spyglasses') . '</button>';
+        echo '</div>';
+        
+        // Categories tab
+        echo '<div class="spyglasses-tab-content active" id="categories-tab">';
+        
+        foreach ($patterns as $category => $subcategories) {
+            $category_id = sanitize_title($category);
+            $category_blocked = in_array('category:' . $category, $custom_blocks);
+            $category_allowed = in_array('category:' . $category, $custom_allows);
+            $flag_class = '';
+            
+            if (isset($subcategories['__flags'])) {
+                $flags = $subcategories['__flags'];
+                unset($subcategories['__flags']);
+                
+                if (!empty($flags['isAiModelTrainer'])) {
+                    $flag_class .= ' spyglasses-ai-model-trainer';
+                }
+                if (!empty($flags['isAiVisitor'])) {
+                    $flag_class .= ' spyglasses-ai-visitor';
+                }
+                if (!empty($flags['isCrawler'])) {
+                    $flag_class .= ' spyglasses-crawler';
+                }
+            }
+            
+            echo '<div class="spyglasses-category' . $flag_class . '">';
+            echo '<h4>';
+            echo '<span class="toggle-indicator" data-target="' . $category_id . '">▶</span> ';
+            echo esc_html($category);
+            
+            // Category action buttons
+            echo '<div class="spyglasses-actions">';
+            echo '<button type="button" class="button-link spyglasses-block-btn' . ($category_blocked ? ' active' : '') . '" data-id="category:' . esc_attr($category) . '">';
+            echo __('Block', 'spyglasses');
+            echo '</button>';
+            echo '<button type="button" class="button-link spyglasses-allow-btn' . ($category_allowed ? ' active' : '') . '" data-id="category:' . esc_attr($category) . '">';
+            echo __('Allow', 'spyglasses');
+            echo '</button>';
+            echo '</div>';
+            echo '</h4>';
+            
+            echo '<div class="spyglasses-subcategories" id="' . $category_id . '" style="display: none;">';
+            
+            foreach ($subcategories as $subcategory => $types) {
+                $subcategory_id = $category_id . '-' . sanitize_title($subcategory);
+                $subcategory_blocked = in_array('subcategory:' . $category . ':' . $subcategory, $custom_blocks);
+                $subcategory_allowed = in_array('subcategory:' . $category . ':' . $subcategory, $custom_allows);
+                
+                echo '<div class="spyglasses-subcategory">';
+                echo '<h5>';
+                echo '<span class="toggle-indicator" data-target="' . $subcategory_id . '">▶</span> ';
+                echo esc_html($subcategory);
+                
+                // Subcategory action buttons
+                echo '<div class="spyglasses-actions">';
+                echo '<button type="button" class="button-link spyglasses-block-btn' . ($subcategory_blocked ? ' active' : '') . '" data-id="subcategory:' . esc_attr($category) . ':' . esc_attr($subcategory) . '">';
+                echo __('Block', 'spyglasses');
+                echo '</button>';
+                echo '<button type="button" class="button-link spyglasses-allow-btn' . ($subcategory_allowed ? ' active' : '') . '" data-id="subcategory:' . esc_attr($category) . ':' . esc_attr($subcategory) . '">';
+                echo __('Allow', 'spyglasses');
+                echo '</button>';
+                echo '</div>';
+                echo '</h5>';
+                
+                echo '<div class="spyglasses-types" id="' . $subcategory_id . '" style="display: none;">';
+                
+                foreach ($types as $type => $patterns_array) {
+                    $type_id = $subcategory_id . '-' . sanitize_title($type);
+                    $type_blocked = in_array('type:' . $category . ':' . $subcategory . ':' . $type, $custom_blocks);
+                    $type_allowed = in_array('type:' . $category . ':' . $subcategory . ':' . $type, $custom_allows);
+                    
+                    echo '<div class="spyglasses-type">';
+                    echo '<h6>';
+                    echo '<span class="toggle-indicator" data-target="' . $type_id . '">▶</span> ';
+                    echo esc_html($type);
+                    
+                    // Type action buttons
+                    echo '<div class="spyglasses-actions">';
+                    echo '<button type="button" class="button-link spyglasses-block-btn' . ($type_blocked ? ' active' : '') . '" data-id="type:' . esc_attr($category) . ':' . esc_attr($subcategory) . ':' . esc_attr($type) . '">';
+                    echo __('Block', 'spyglasses');
+                    echo '</button>';
+                    echo '<button type="button" class="button-link spyglasses-allow-btn' . ($type_allowed ? ' active' : '') . '" data-id="type:' . esc_attr($category) . ':' . esc_attr($subcategory) . ':' . esc_attr($type) . '">';
+                    echo __('Allow', 'spyglasses');
+                    echo '</button>';
+                    echo '</div>';
+                    echo '</h6>';
+                    
+                    echo '<div class="spyglasses-patterns" id="' . $type_id . '" style="display: none;">';
+                    
+                    foreach ($patterns_array as $pattern_data) {
+                        $pattern_blocked = in_array('pattern:' . $pattern_data['pattern'], $custom_blocks);
+                        $pattern_allowed = in_array('pattern:' . $pattern_data['pattern'], $custom_allows);
+                        
+                        echo '<div class="spyglasses-pattern">';
+                        echo '<code>' . esc_html($pattern_data['pattern']) . '</code>';
+                        
+                        // Pattern action buttons
+                        echo '<div class="spyglasses-actions">';
+                        echo '<button type="button" class="button-link spyglasses-block-btn' . ($pattern_blocked ? ' active' : '') . '" data-id="pattern:' . esc_attr($pattern_data['pattern']) . '">';
+                        echo __('Block', 'spyglasses');
+                        echo '</button>';
+                        echo '<button type="button" class="button-link spyglasses-allow-btn' . ($pattern_allowed ? ' active' : '') . '" data-id="pattern:' . esc_attr($pattern_data['pattern']) . '">';
+                        echo __('Allow', 'spyglasses');
+                        echo '</button>';
+                        echo '</div>';
+                        echo '</div>';
+                    }
+                    
+                    echo '</div>'; // End patterns
+                    echo '</div>'; // End type
+                }
+                
+                echo '</div>'; // End types
+                echo '</div>'; // End subcategory
+            }
+            
+            echo '</div>'; // End subcategories
+            echo '</div>'; // End category
+        }
+        
+        echo '</div>'; // End categories tab
+        
+        // Patterns tab (flat list)
+        echo '<div class="spyglasses-tab-content" id="patterns-tab" style="display: none;">';
+        echo '<input type="text" id="spyglasses-pattern-search" placeholder="' . esc_attr__('Search patterns...', 'spyglasses') . '" class="regular-text">';
+        echo '<div class="spyglasses-pattern-list">';
+        
+        $all_patterns = $this->get_all_patterns_flat();
+        foreach ($all_patterns as $pattern_data) {
+            $pattern_blocked = in_array('pattern:' . $pattern_data['pattern'], $custom_blocks);
+            $pattern_allowed = in_array('pattern:' . $pattern_data['pattern'], $custom_allows);
+            $flag_class = '';
+            
+            if (!empty($pattern_data['isAiModelTrainer'])) {
+                $flag_class .= ' spyglasses-ai-model-trainer';
+            }
+            if (!empty($pattern_data['isAiVisitor'])) {
+                $flag_class .= ' spyglasses-ai-visitor';
+            }
+            if (!empty($pattern_data['isCrawler'])) {
+                $flag_class .= ' spyglasses-crawler';
+            }
+            
+            echo '<div class="spyglasses-pattern-item' . $flag_class . '">';
+            echo '<div class="spyglasses-pattern-info">';
+            echo '<code>' . esc_html($pattern_data['pattern']) . '</code>';
+            echo '<span class="spyglasses-pattern-category">' . esc_html($pattern_data['category'] . ' > ' . $pattern_data['subcategory']) . '</span>';
+            echo '</div>';
+            
+            // Pattern action buttons
+            echo '<div class="spyglasses-actions">';
+            echo '<button type="button" class="button-link spyglasses-block-btn' . ($pattern_blocked ? ' active' : '') . '" data-id="pattern:' . esc_attr($pattern_data['pattern']) . '">';
+            echo __('Block', 'spyglasses');
+            echo '</button>';
+            echo '<button type="button" class="button-link spyglasses-allow-btn' . ($pattern_allowed ? ' active' : '') . '" data-id="pattern:' . esc_attr($pattern_data['pattern']) . '">';
+            echo __('Allow', 'spyglasses');
+            echo '</button>';
+            echo '</div>';
+            echo '</div>';
+        }
+        
+        echo '</div>'; // End pattern list
+        echo '</div>'; // End patterns tab
+        
+        // Hidden fields to store custom block and allow lists
+        echo '<input type="hidden" id="spyglasses_custom_blocks" name="spyglasses_custom_blocks" value="' . esc_attr(json_encode($custom_blocks)) . '" />';
+        echo '<input type="hidden" id="spyglasses_custom_allows" name="spyglasses_custom_allows" value="' . esc_attr(json_encode($custom_allows)) . '" />';
+        
+        echo '</div>'; // End patterns wrapper
+        
+        // Add the JavaScript for handling the UI interactions
+        $this->add_pattern_blocking_script();
+    }
+    
+    /**
+     * Add JavaScript for pattern blocking UI
+     */
+    private function add_pattern_blocking_script() {
+        ?>
+        <script>
+        jQuery(document).ready(function($) {
+            // Toggle sections
+            $('.toggle-indicator').on('click', function() {
+                var target = $(this).data('target');
+                $('#' + target).toggle();
+                $(this).text($(this).text() === '▶' ? '▼' : '▶');
+            });
+            
+            // Tab switching
+            $('.spyglasses-tab').on('click', function() {
+                var tab = $(this).data('tab');
+                $('.spyglasses-tab').removeClass('active');
+                $(this).addClass('active');
+                $('.spyglasses-tab-content').hide();
+                $('#' + tab + '-tab').show();
+            });
+            
+            // Search functionality
+            $('#spyglasses-pattern-search').on('input', function() {
+                var search = $(this).val().toLowerCase();
+                $('.spyglasses-pattern-item').each(function() {
+                    var pattern = $(this).find('code').text().toLowerCase();
+                    var category = $(this).find('.spyglasses-pattern-category').text().toLowerCase();
+                    if (pattern.includes(search) || category.includes(search)) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            });
+            
+            // Block button handling
+            $('.spyglasses-block-btn').on('click', function() {
+                var id = $(this).data('id');
+                var $btn = $(this);
+                var $allowBtn = $btn.closest('.spyglasses-actions').find('.spyglasses-allow-btn');
+                var customBlocks = JSON.parse($('#spyglasses_custom_blocks').val() || '[]');
+                var customAllows = JSON.parse($('#spyglasses_custom_allows').val() || '[]');
+                
+                if ($btn.hasClass('active')) {
+                    // Remove from block list
+                    customBlocks = customBlocks.filter(function(item) {
+                        return item !== id;
+                    });
+                    $btn.removeClass('active');
+                } else {
+                    // Add to block list
+                    if (!customBlocks.includes(id)) {
+                        customBlocks.push(id);
+                    }
+                    $btn.addClass('active');
+                    
+                    // Remove from allow list if present
+                    if ($allowBtn.hasClass('active')) {
+                        customAllows = customAllows.filter(function(item) {
+                            return item !== id;
+                        });
+                        $allowBtn.removeClass('active');
+                    }
+                }
+                
+                $('#spyglasses_custom_blocks').val(JSON.stringify(customBlocks));
+                $('#spyglasses_custom_allows').val(JSON.stringify(customAllows));
+            });
+            
+            // Allow button handling
+            $('.spyglasses-allow-btn').on('click', function() {
+                var id = $(this).data('id');
+                var $btn = $(this);
+                var $blockBtn = $btn.closest('.spyglasses-actions').find('.spyglasses-block-btn');
+                var customBlocks = JSON.parse($('#spyglasses_custom_blocks').val() || '[]');
+                var customAllows = JSON.parse($('#spyglasses_custom_allows').val() || '[]');
+                
+                if ($btn.hasClass('active')) {
+                    // Remove from allow list
+                    customAllows = customAllows.filter(function(item) {
+                        return item !== id;
+                    });
+                    $btn.removeClass('active');
+                } else {
+                    // Add to allow list
+                    if (!customAllows.includes(id)) {
+                        customAllows.push(id);
+                    }
+                    $btn.addClass('active');
+                    
+                    // Remove from block list if present
+                    if ($blockBtn.hasClass('active')) {
+                        customBlocks = customBlocks.filter(function(item) {
+                            return item !== id;
+                        });
+                        $blockBtn.removeClass('active');
+                    }
+                }
+                
+                $('#spyglasses_custom_blocks').val(JSON.stringify(customBlocks));
+                $('#spyglasses_custom_allows').val(JSON.stringify(customAllows));
+            });
+        });
+        </script>
+        <style>
+            .spyglasses-patterns-wrapper {
+                margin-top: 15px;
+                border: 1px solid #ccd0d4;
+                border-radius: 4px;
+                background: #fff;
+                padding: 15px;
+            }
+            
+            .spyglasses-tabs {
+                margin-bottom: 15px;
+                border-bottom: 1px solid #ccd0d4;
+            }
+            
+            .spyglasses-tab {
+                padding: 8px 12px;
+                background: none;
+                border: none;
+                border-bottom: 3px solid transparent;
+                cursor: pointer;
+                margin-right: 10px;
+            }
+            
+            .spyglasses-tab.active {
+                border-bottom-color: #2271b1;
+                font-weight: 600;
+            }
+            
+            .spyglasses-category, .spyglasses-subcategory, .spyglasses-type {
+                margin-bottom: 10px;
+            }
+            
+            .spyglasses-category h4, .spyglasses-subcategory h5, .spyglasses-type h6 {
+                margin: 0;
+                padding: 8px;
+                background: #f9f9f9;
+                border: 1px solid #e5e5e5;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .spyglasses-subcategory h5 {
+                background: #f0f0f0;
+            }
+            
+            .spyglasses-type h6 {
+                background: #e8e8e8;
+            }
+            
+            .spyglasses-pattern {
+                padding: 8px;
+                margin: 5px 0;
+                border: 1px solid #e5e5e5;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .spyglasses-pattern-item {
+                padding: 8px;
+                margin: 5px 0;
+                border: 1px solid #e5e5e5;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .spyglasses-pattern-info {
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .spyglasses-pattern-category {
+                font-size: 0.8em;
+                color: #666;
+                margin-top: 3px;
+            }
+            
+            .spyglasses-actions {
+                display: flex;
+                gap: 10px;
+            }
+            
+            .spyglasses-block-btn, .spyglasses-allow-btn {
+                padding: 2px 6px;
+                cursor: pointer;
+                border-radius: 3px;
+            }
+            
+            .spyglasses-block-btn {
+                color: #a00;
+            }
+            
+            .spyglasses-allow-btn {
+                color: #0a0;
+            }
+            
+            .spyglasses-block-btn.active {
+                background-color: #a00;
+                color: #fff;
+            }
+            
+            .spyglasses-allow-btn.active {
+                background-color: #0a0;
+                color: #fff;
+            }
+            
+            .toggle-indicator {
+                cursor: pointer;
+                margin-right: 5px;
+            }
+            
+            /* Indicators for special categories */
+            .spyglasses-ai-model-trainer {
+                border-left: 3px solid #e74c3c;
+            }
+            
+            .spyglasses-ai-visitor {
+                border-left: 3px solid #3498db;
+            }
+            
+            .spyglasses-crawler {
+                border-left: 3px solid #f39c12;
+            }
+            
+            #spyglasses-pattern-search {
+                margin-bottom: 15px;
+                width: 100%;
+            }
+        </style>
+        <?php
+    }
+    
+    /**
+     * Get patterns in a hierarchical structure
+     * 
+     * @return array Patterns organized by category, subcategory, and type
+     */
+    private function get_patterns_hierarchy() {
+        $cached_patterns = get_transient('spyglasses_agent_patterns');
+        if (!$cached_patterns || !isset($cached_patterns['patterns'])) {
+            return array();
+        }
+        
+        $hierarchy = array();
+        
+        foreach ($cached_patterns['patterns'] as $pattern) {
+            $category = isset($pattern['category']) ? $pattern['category'] : 'Unknown';
+            $subcategory = isset($pattern['subcategory']) ? $pattern['subcategory'] : 'Unclassified';
+            $type = isset($pattern['type']) ? $pattern['type'] : 'unknown';
+            
+            // Initialize category if not exists
+            if (!isset($hierarchy[$category])) {
+                $hierarchy[$category] = array(
+                    '__flags' => array(
+                        'isAiVisitor' => !empty($pattern['isAiVisitor']),
+                        'isAiModelTrainer' => !empty($pattern['isAiModelTrainer']),
+                        'isCrawler' => !empty($pattern['isCrawler'])
+                    )
+                );
+            } else {
+                // Update flags
+                $hierarchy[$category]['__flags']['isAiVisitor'] = $hierarchy[$category]['__flags']['isAiVisitor'] || !empty($pattern['isAiVisitor']);
+                $hierarchy[$category]['__flags']['isAiModelTrainer'] = $hierarchy[$category]['__flags']['isAiModelTrainer'] || !empty($pattern['isAiModelTrainer']);
+                $hierarchy[$category]['__flags']['isCrawler'] = $hierarchy[$category]['__flags']['isCrawler'] || !empty($pattern['isCrawler']);
+            }
+            
+            // Initialize subcategory if not exists
+            if (!isset($hierarchy[$category][$subcategory])) {
+                $hierarchy[$category][$subcategory] = array();
+            }
+            
+            // Initialize type if not exists
+            if (!isset($hierarchy[$category][$subcategory][$type])) {
+                $hierarchy[$category][$subcategory][$type] = array();
+            }
+            
+            // Add pattern to type
+            $hierarchy[$category][$subcategory][$type][] = $pattern;
+        }
+        
+        return $hierarchy;
+    }
+    
+    /**
+     * Get all patterns in a flat list
+     * 
+     * @return array All patterns in a flat array
+     */
+    private function get_all_patterns_flat() {
+        $cached_patterns = get_transient('spyglasses_agent_patterns');
+        if (!$cached_patterns || !isset($cached_patterns['patterns'])) {
+            return array();
+        }
+        
+        return $cached_patterns['patterns'];
     }
 } 

@@ -28,6 +28,27 @@ class Spyglasses {
     private $debug_mode;
 
     /**
+     * Block AI model trainers
+     * 
+     * @var bool
+     */
+    private $block_ai_model_trainers;
+
+    /**
+     * Custom blocks list
+     * 
+     * @var array
+     */
+    private $custom_blocks;
+
+    /**
+     * Custom allows list
+     * 
+     * @var array
+     */
+    private $custom_allows;
+
+    /**
      * Agent patterns from JSON
      * 
      * @var array
@@ -48,13 +69,16 @@ class Spyglasses {
         // Get settings
         $this->api_key = get_option('spyglasses_api_key', '');
         $this->debug_mode = get_option('spyglasses_debug_mode', 'no') === 'yes';
+        $this->block_ai_model_trainers = get_option('spyglasses_block_ai_model_trainers', 'no') === 'yes';
+        $this->custom_blocks = json_decode(get_option('spyglasses_custom_blocks', '[]'), true);
+        $this->custom_allows = json_decode(get_option('spyglasses_custom_allows', '[]'), true);
         $auto_sync = get_option('spyglasses_auto_sync_patterns', 'yes') === 'yes';
         
         // Load agent patterns
         $this->load_agent_patterns();
         
         // Hook into WordPress
-        add_action('init', array($this, 'detect_bot'));
+        add_action('init', array($this, 'detect_bot'), 5); // Set priority to 5 to run early
         
         // Register scheduled event for updating patterns if auto-sync is enabled
         if ($auto_sync) {
@@ -223,6 +247,7 @@ class Spyglasses {
         // Check if it's a bot
         $is_bot = false;
         $bot_info = null;
+        $should_block = false;
 
         // Iterate through patterns
         if (isset($this->agent_patterns['patterns']) && is_array($this->agent_patterns['patterns'])) {
@@ -232,6 +257,12 @@ class Spyglasses {
                     if (preg_match($pattern, $user_agent)) {
                         $is_bot = true;
                         $bot_info = $pattern_data;
+                        
+                        // Check if this pattern should be blocked
+                        if ($this->should_block_pattern($pattern_data)) {
+                            $should_block = true;
+                        }
+                        
                         break;
                     }
                 }
@@ -240,8 +271,65 @@ class Spyglasses {
 
         // If it's a bot, log the visit
         if ($is_bot) {
-            $this->log_bot_visit($user_agent, $bot_info);
+            // If the bot should be blocked and we're not in an admin context
+            if ($should_block) {
+                // Log the blocked visit before sending the 403 response
+                $this->log_bot_visit($user_agent, $bot_info, true);
+                
+                // Send 403 Forbidden response
+                status_header(403);
+                header('Content-Type: text/plain');
+                echo 'Access Denied - Bots are not allowed to access this site.';
+                exit;
+            } else {
+                // Log the visit as normal
+                $this->log_bot_visit($user_agent, $bot_info, false);
+            }
         }
+    }
+
+    /**
+     * Check if a pattern should be blocked based on rules
+     * 
+     * @param array $pattern_data The pattern data
+     * @return bool Whether the pattern should be blocked
+     */
+    private function should_block_pattern($pattern_data) {
+        // Check if pattern is explicitly allowed
+        if (in_array('pattern:' . $pattern_data['pattern'], $this->custom_allows)) {
+            return false;
+        }
+        
+        $category = isset($pattern_data['category']) ? $pattern_data['category'] : 'Unknown';
+        $subcategory = isset($pattern_data['subcategory']) ? $pattern_data['subcategory'] : 'Unclassified';
+        $type = isset($pattern_data['type']) ? $pattern_data['type'] : 'unknown';
+        
+        // Check if any parent is explicitly allowed
+        if (in_array('category:' . $category, $this->custom_allows) ||
+            in_array('subcategory:' . $category . ':' . $subcategory, $this->custom_allows) ||
+            in_array('type:' . $category . ':' . $subcategory . ':' . $type, $this->custom_allows)) {
+            return false;
+        }
+        
+        // Check if pattern is explicitly blocked
+        if (in_array('pattern:' . $pattern_data['pattern'], $this->custom_blocks)) {
+            return true;
+        }
+        
+        // Check if any parent is explicitly blocked
+        if (in_array('category:' . $category, $this->custom_blocks) ||
+            in_array('subcategory:' . $category . ':' . $subcategory, $this->custom_blocks) ||
+            in_array('type:' . $category . ':' . $subcategory . ':' . $type, $this->custom_blocks)) {
+            return true;
+        }
+        
+        // Check for AI model trainers global setting
+        if ($this->block_ai_model_trainers && !empty($pattern_data['isAiModelTrainer'])) {
+            return true;
+        }
+        
+        // Default to not blocking
+        return false;
     }
 
     /**
@@ -249,8 +337,9 @@ class Spyglasses {
      * 
      * @param string $user_agent The user agent string
      * @param array $bot_info Information about the bot
+     * @param bool $was_blocked Whether the bot was blocked
      */
-    private function log_bot_visit($user_agent, $bot_info) {
+    private function log_bot_visit($user_agent, $bot_info, $was_blocked = false) {
         // Start timing the response
         $start_time = microtime(true);
         
@@ -258,11 +347,14 @@ class Spyglasses {
         $url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
         
         // Get HTTP status code 
-        $status_code = http_response_code();
+        $status_code = $was_blocked ? 403 : http_response_code();
         if (!$status_code) $status_code = 200; // Default to 200 if not set
         
         // Calculate response time in milliseconds
         $response_time = (microtime(true) - $start_time) * 1000;
+        
+        $metadata = $this->get_agent_metadata($bot_info);
+        $metadata['was_blocked'] = $was_blocked;
         
         do_action('spyglasses_before_api_request', SPYGLASSES_COLLECTOR_ENDPOINT, [
             'method' => 'POST',
@@ -277,7 +369,8 @@ class Spyglasses {
                 'response_status' => $status_code,
                 'response_time_ms' => $response_time,
                 'headers' => $this->get_headers(),
-                'timestamp' => gmdate('Y-m-d\TH:i:s\Z')
+                'timestamp' => gmdate('Y-m-d\TH:i:s\Z'),
+                'metadata' => $metadata
             ]
         ]);
         
@@ -302,7 +395,8 @@ class Spyglasses {
                 'response_status' => $status_code,
                 'response_time_ms' => $response_time,
                 'headers' => $this->get_headers(),
-                'timestamp' => gmdate('Y-m-d\TH:i:s\Z')
+                'timestamp' => gmdate('Y-m-d\TH:i:s\Z'),
+                'metadata' => $metadata
             ]),
             'cookies' => array()
         ));
@@ -315,6 +409,8 @@ class Spyglasses {
                 $body = wp_remote_retrieve_body($response);
                 if ($code >= 400) {
                     error_log("Spyglasses API error (HTTP $code): $body");
+                } elseif ($was_blocked) {
+                    error_log("Spyglasses blocked bot: $user_agent");
                 }
             }
         }
