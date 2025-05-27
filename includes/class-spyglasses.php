@@ -247,6 +247,14 @@ class Spyglasses {
         if (is_admin() || wp_doing_ajax()) {
             return;
         }
+        
+        // Skip WordPress cron requests
+        if ($this->is_wordpress_cron_request()) {
+            if ($this->debug_mode) {
+                error_log('Spyglasses: Skipping WordPress cron request');
+            }
+            return;
+        }
 
         // Get user agent
         $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '';
@@ -325,6 +333,48 @@ class Spyglasses {
         if ($is_ai_referrer) {
             $this->log_referrer_visit($referrer, $referrer_info, false);
         }
+    }
+
+    /**
+     * Determines if the current request is a WordPress cron job
+     * 
+     * @return bool True if this is a WordPress cron request
+     */
+    private function is_wordpress_cron_request() {
+        // Check for the specific endpoint
+        $is_cron_endpoint = false;
+        if (isset($_SERVER['REQUEST_URI'])) {
+            // Check if the URI contains wp-cron.php
+            $is_cron_endpoint = (strpos($_SERVER['REQUEST_URI'], 'wp-cron.php') !== false);
+        }
+        
+        // Check for the cron query parameter
+        $has_cron_param = isset($_GET['doing_wp_cron']);
+        
+        // Check for WordPress version in user agent
+        $is_wp_user_agent = false;
+        if (isset($_SERVER['HTTP_USER_AGENT'])) {
+            $user_agent = $_SERVER['HTTP_USER_AGENT'];
+            // WordPress cron has user agent like "WordPress/x.x.x; https://example.com"
+            $is_wp_user_agent = (strpos($user_agent, 'WordPress/') === 0);
+            
+            // Extra verification: check if the site URL is in the user agent
+            // This helps ensure it's a legitimate WordPress cron and not an external request
+            if ($is_wp_user_agent) {
+                $site_url = get_site_url();
+                $site_domain = parse_url($site_url, PHP_URL_HOST);
+                if (!empty($site_domain) && strpos($user_agent, $site_domain) === false) {
+                    // If the site domain isn't in the user agent, it might not be a legitimate cron
+                    $is_wp_user_agent = false;
+                }
+            }
+        }
+        
+        // Also check for the WordPress constant that's defined during cron
+        $defined_as_cron = defined('DOING_CRON') && DOING_CRON;
+        
+        // Consider it a cron if the endpoint matches AND (has cron param OR has WP user agent OR DOING_CRON is defined)
+        return $is_cron_endpoint && ($has_cron_param || $is_wp_user_agent || $defined_as_cron);
     }
 
     /**

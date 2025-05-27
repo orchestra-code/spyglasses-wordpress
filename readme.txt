@@ -25,6 +25,7 @@ Spyglasses provides advanced detection for AI agents, bots, and AI referrer traf
 * **Lightweight**: Minimal impact on site performance and user experience
 * **Easy Setup**: Simple configuration with just an API key
 * **Auto-Updating Patterns**: Automatically syncs with latest AI detection patterns daily
+* **Smart Filtering**: Automatically excludes WordPress internal processes to prevent log pollution
 
 ### How It Works
 
@@ -104,12 +105,16 @@ After reproducing the issue, check the debug.log file for messages starting with
 
 == Changelog ==
 
+= 0.3.1 =
+* Don't log visits for WordPress internal cron checks.
+
 = 0.3.0 =
 * Added AI referrer tracking for visitors coming from AI platforms
 * Added separate UI section for viewing tracked AI referrer sources
 * Updated detection to differentiate between AI bots and human visitors from AI platforms
 * Improved logging to provide richer AI traffic insights
 * Updated patterns endpoint to include AI referrer information
+* Optimized logging to improve performance
 
 = 0.2.0 =
 * Added bot blocking functionality
@@ -127,6 +132,9 @@ After reproducing the issue, check the debug.log file for messages starting with
 
 == Upgrade Notice ==
 
+= 0.3.1 =
+Ignore WordPress internal cron requests.
+
 = 0.3.0 =
 This update adds AI referrer tracking to identify human visitors coming from AI platforms like ChatGPT, Perplexity, Claude, and other AI services.
 
@@ -134,4 +142,4 @@ This update adds AI referrer tracking to identify human visitors coming from AI 
 This update adds bot blocking functionality to prevent unwanted AI agents and bots from accessing your site.
 
 = 0.1.0 =
-Initial plugin release 
+Initial plugin release
