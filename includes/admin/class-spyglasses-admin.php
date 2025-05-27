@@ -128,10 +128,26 @@ class Spyglasses_Admin {
         
         add_settings_field(
             'spyglasses_pattern_blocking',
-            __('Custom Blocking Rules', 'spyglasses'),
+            __('Custom Blocking Rules for User Agents', 'spyglasses'),
             array($this, 'render_pattern_blocking_field'),
             'spyglasses',
             'spyglasses_blocking_section'
+        );
+        
+        // Add AI Referrers Section
+        add_settings_section(
+            'spyglasses_referrers_section',
+            __('AI Referrer Tracking', 'spyglasses'),
+            array($this, 'render_referrers_section'),
+            'spyglasses'
+        );
+        
+        add_settings_field(
+            'spyglasses_referrer_tracking',
+            __('AI Referrer Sources', 'spyglasses'),
+            array($this, 'render_referrer_tracking_field'),
+            'spyglasses',
+            'spyglasses_referrers_section'
         );
     }
 
@@ -433,6 +449,15 @@ class Spyglasses_Admin {
     public function render_blocking_section() {
         echo '<p>';
         echo __('Configure which bots and AI agents to block from accessing your site. Blocked requests will receive a 403 Forbidden response.', 'spyglasses');
+        echo '</p>';
+    }
+    
+    /**
+     * Render AI referrers section
+     */
+    public function render_referrers_section() {
+        echo '<p>';
+        echo __('Spyglasses tracks human visitors who arrive at your site via links in AI-generated content. These are regular visitors using browsers, not bots, so they are never blocked.', 'spyglasses');
         echo '</p>';
     }
     
@@ -949,5 +974,140 @@ class Spyglasses_Admin {
         }
         
         return $cached_patterns['patterns'];
+    }
+
+    /**
+     * Render AI referrer tracking field
+     */
+    public function render_referrer_tracking_field() {
+        $cached_patterns = get_transient('spyglasses_agent_patterns');
+        $ai_referrers = isset($cached_patterns['aiReferrers']) ? $cached_patterns['aiReferrers'] : array();
+        
+        if (empty($ai_referrers)) {
+            echo '<p class="description">';
+            echo __('No AI referrers available. Please sync patterns first.', 'spyglasses');
+            echo '</p>';
+            return;
+        }
+        
+        echo '<div class="spyglasses-referrers-wrapper">';
+        echo '<p class="description">';
+        echo __('AI referrers are websites that send visitors to your site by including links in AI-generated content. For example, when users click links in Perplexity, Bing AI, or other AI services.', 'spyglasses');
+        echo '</p>';
+        
+        echo '<div class="spyglasses-referrer-list">';
+        
+        foreach ($ai_referrers as $referrer) {
+            $referrer_id = $referrer['id'];
+            
+            echo '<div class="spyglasses-referrer-item">';
+            echo '<div class="spyglasses-referrer-info">';
+            
+            // Show logo if available
+            if (!empty($referrer['logoUrl'])) {
+                echo '<img src="' . esc_url($referrer['logoUrl']) . '" alt="' . esc_attr($referrer['name']) . '" class="spyglasses-referrer-logo" />';
+            }
+            
+            echo '<div class="spyglasses-referrer-details">';
+            echo '<h4>' . esc_html($referrer['name']) . '</h4>';
+            
+            if (!empty($referrer['company'])) {
+                echo '<p class="spyglasses-referrer-company">' . esc_html($referrer['company']) . '</p>';
+            }
+            
+            echo '<p class="spyglasses-referrer-description">' . esc_html($referrer['description']) . '</p>';
+            
+            if (!empty($referrer['url'])) {
+                echo '<p class="spyglasses-referrer-url"><a href="' . esc_url($referrer['url']) . '" target="_blank">' . esc_html($referrer['url']) . '</a></p>';
+            }
+            
+            if (!empty($referrer['patterns'])) {
+                echo '<div class="spyglasses-referrer-patterns">';
+                echo '<strong>' . __('Pattern matches:', 'spyglasses') . '</strong>';
+                echo '<ul>';
+                foreach ($referrer['patterns'] as $pattern) {
+                    echo '<li><code>' . esc_html($pattern) . '</code></li>';
+                }
+                echo '</ul>';
+                echo '</div>';
+            }
+            
+            echo '</div>'; // End referrer details
+            echo '</div>'; // End referrer info
+            
+            echo '</div>'; // End referrer item
+        }
+        
+        echo '</div>'; // End referrer list
+        echo '</div>'; // End referrers wrapper
+        
+        // Add some CSS styles specific to the referrer section
+        ?>
+        <style>
+            .spyglasses-referrers-wrapper {
+                margin-top: 15px;
+            }
+            
+            .spyglasses-referrer-item {
+                padding: 15px;
+                margin: 10px 0;
+                border: 1px solid #e5e5e5;
+                background: #fff;
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+            }
+            
+            .spyglasses-referrer-info {
+                display: flex;
+                flex: 1;
+            }
+            
+            .spyglasses-referrer-logo {
+                max-width: 60px;
+                max-height: 60px;
+                margin-right: 15px;
+            }
+            
+            .spyglasses-referrer-details {
+                flex: 1;
+            }
+            
+            .spyglasses-referrer-details h4 {
+                margin-top: 0;
+                margin-bottom: 5px;
+            }
+            
+            .spyglasses-referrer-company {
+                color: #666;
+                margin: 0 0 5px;
+                font-style: italic;
+            }
+            
+            .spyglasses-referrer-description {
+                margin: 5px 0;
+            }
+            
+            .spyglasses-referrer-url {
+                margin: 5px 0;
+                word-break: break-all;
+            }
+            
+            .spyglasses-referrer-patterns {
+                margin-top: 10px;
+                padding: 8px;
+                background: #f9f9f9;
+                border-radius: 3px;
+            }
+            
+            .spyglasses-referrer-patterns ul {
+                margin: 5px 0 0 20px;
+            }
+            
+            .spyglasses-referrer-patterns code {
+                font-size: 0.85em;
+            }
+        </style>
+        <?php
     }
 } 

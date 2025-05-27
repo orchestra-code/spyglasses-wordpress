@@ -56,6 +56,13 @@ class Spyglasses {
     private $agent_patterns;
     
     /**
+     * AI referrer patterns from JSON
+     * 
+     * @var array
+     */
+    private $ai_referrers;
+    
+    /**
      * Patterns API endpoint
      * 
      * @var string
@@ -103,6 +110,7 @@ class Spyglasses {
         $cached_patterns = get_transient('spyglasses_agent_patterns');
         if ($cached_patterns) {
             $this->agent_patterns = $cached_patterns;
+            $this->ai_referrers = isset($cached_patterns['aiReferrers']) ? $cached_patterns['aiReferrers'] : array();
             return;
         }
         
@@ -112,6 +120,7 @@ class Spyglasses {
         if (file_exists($agents_file)) {
             $json_content = file_get_contents($agents_file);
             $this->agent_patterns = json_decode($json_content, true);
+            $this->ai_referrers = isset($this->agent_patterns['aiReferrers']) ? $this->agent_patterns['aiReferrers'] : array();
         } else {
             // Use default patterns if file doesn't exist
             $this->agent_patterns = array(
@@ -148,7 +157,9 @@ class Spyglasses {
                         'intent' => 'Search'
                     ),
                 ),
+                'aiReferrers' => array()
             );
+            $this->ai_referrers = array();
         }
         
         // Try to update patterns from remote API immediately 
@@ -240,7 +251,11 @@ class Spyglasses {
         // Get user agent
         $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '';
         
-        if (empty($user_agent)) {
+        // Get referrer
+        $referrer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
+        
+        // Early return if we have nothing to check
+        if (empty($user_agent) && empty($referrer)) {
             return;
         }
 
@@ -248,28 +263,47 @@ class Spyglasses {
         $is_bot = false;
         $bot_info = null;
         $should_block = false;
+        $is_ai_referrer = false;
+        $referrer_info = null;
 
-        // Iterate through patterns
-        if (isset($this->agent_patterns['patterns']) && is_array($this->agent_patterns['patterns'])) {
-            foreach ($this->agent_patterns['patterns'] as $pattern_data) {
-                if (isset($pattern_data['pattern'])) {
-                    $pattern = '/' . $pattern_data['pattern'] . '/i';
-                    if (preg_match($pattern, $user_agent)) {
-                        $is_bot = true;
-                        $bot_info = $pattern_data;
-                        
-                        // Check if this pattern should be blocked
-                        if ($this->should_block_pattern($pattern_data)) {
-                            $should_block = true;
+        // Check user agent patterns first for bot detection
+        if (!empty($user_agent)) {
+            if (isset($this->agent_patterns['patterns']) && is_array($this->agent_patterns['patterns'])) {
+                foreach ($this->agent_patterns['patterns'] as $pattern_data) {
+                    if (isset($pattern_data['pattern'])) {
+                        $pattern = '/' . $pattern_data['pattern'] . '/i';
+                        if (preg_match($pattern, $user_agent)) {
+                            $is_bot = true;
+                            $bot_info = $pattern_data;
+                            
+                            // Check if this pattern should be blocked
+                            if ($this->should_block_pattern($pattern_data)) {
+                                $should_block = true;
+                            }
+                            
+                            break;
                         }
-                        
-                        break;
+                    }
+                }
+            }
+        }
+        
+        // Check referrer patterns for AI referrer detection (these are always tracked but never blocked)
+        if (!empty($referrer) && !empty($this->ai_referrers)) {
+            foreach ($this->ai_referrers as $ai_referrer) {
+                if (!empty($ai_referrer['patterns'])) {
+                    foreach ($ai_referrer['patterns'] as $pattern) {
+                        if (preg_match('/' . $pattern . '/i', $referrer)) {
+                            $is_ai_referrer = true;
+                            $referrer_info = $ai_referrer;
+                            break 2; // Break both loops
+                        }
                     }
                 }
             }
         }
 
-        // If it's a bot, log the visit
+        // If it's a bot, handle according to blocking rules
         if ($is_bot) {
             // If the bot should be blocked and we're not in an admin context
             if ($should_block) {
@@ -279,12 +313,17 @@ class Spyglasses {
                 // Send 403 Forbidden response
                 status_header(403);
                 header('Content-Type: text/plain');
-                echo 'Access Denied - Bots are not allowed to access this site.';
+                echo 'Access Denied.';
                 exit;
             } else {
                 // Log the visit as normal
                 $this->log_bot_visit($user_agent, $bot_info, false);
             }
+        }
+        
+        // If it's an AI referrer, just log the visit (never block)
+        if ($is_ai_referrer) {
+            $this->log_referrer_visit($referrer, $referrer_info, false);
         }
     }
 
@@ -333,13 +372,27 @@ class Spyglasses {
     }
 
     /**
-     * Log the bot visit to the Spyglasses collector
+     * Check if a referrer should be blocked based on rules
      * 
-     * @param string $user_agent The user agent string
-     * @param array $bot_info Information about the bot
-     * @param bool $was_blocked Whether the bot was blocked
+     * @param string $referrer_id The referrer ID
+     * @return bool Whether the referrer should be blocked
      */
-    private function log_bot_visit($user_agent, $bot_info, $was_blocked = false) {
+    private function should_block_referrer($referrer_id) {
+        // AI referrers should never be blocked as they are human visitors
+        // coming from AI platforms, not bots
+        return false;
+    }
+
+    /**
+     * Log the visit to the Spyglasses collector
+     * 
+     * @param string $source_type Type of visit ('bot' or 'referrer')
+     * @param array $info Information about the bot or referrer
+     * @param string $user_agent The user agent string (for bots)
+     * @param string $referrer The referrer URL (for referrers)
+     * @param bool $was_blocked Whether the visit was blocked
+     */
+    private function log_visit($source_type, $info, $user_agent = '', $referrer = '', $was_blocked = false) {
         // Start timing the response
         $start_time = microtime(true);
         
@@ -353,25 +406,46 @@ class Spyglasses {
         // Calculate response time in milliseconds
         $response_time = (microtime(true) - $start_time) * 1000;
         
-        $metadata = $this->get_agent_metadata($bot_info);
-        $metadata['was_blocked'] = $was_blocked;
+        // Prepare metadata based on source type
+        $metadata = array('was_blocked' => $was_blocked);
+        
+        if ($source_type === 'bot') {
+            // Bot-specific metadata
+            $metadata = array_merge($metadata, $this->get_agent_metadata($info));
+        } else if ($source_type === 'referrer') {
+            // Referrer-specific metadata
+            $metadata = array_merge($metadata, array(
+                'source_type' => 'ai_referrer',
+                'referrer_id' => $info['id'],
+                'referrer_name' => $info['name'],
+                'company' => $info['company']
+            ));
+        }
+        
+        // Prepare common request data
+        $request_data = [
+            'url' => $url,
+            'user_agent' => !empty($user_agent) ? $user_agent : (isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : ''),
+            'ip_address' => $this->get_client_ip(),
+            'request_method' => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET',
+            'request_path' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/',
+            'request_query' => isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : '',
+            'request_body' => '', // Add empty request body
+            'response_status' => $status_code,
+            'response_time_ms' => $response_time,
+            'headers' => $this->get_headers(),
+            'timestamp' => gmdate('Y-m-d\TH:i:s\Z'),
+            'metadata' => $metadata
+        ];
+        
+        // Add referrer if available
+        if (!empty($referrer)) {
+            $request_data['referrer'] = $referrer;
+        }
         
         do_action('spyglasses_before_api_request', SPYGLASSES_COLLECTOR_ENDPOINT, [
             'method' => 'POST',
-            'body' => [
-                'url' => $url,
-                'user_agent' => $user_agent,
-                'ip_address' => $this->get_client_ip(),
-                'request_method' => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET',
-                'request_path' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/',
-                'request_query' => isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : '',
-                'request_body' => '', // Add empty request body
-                'response_status' => $status_code,
-                'response_time_ms' => $response_time,
-                'headers' => $this->get_headers(),
-                'timestamp' => gmdate('Y-m-d\TH:i:s\Z'),
-                'metadata' => $metadata
-            ]
+            'body' => $request_data
         ]);
         
         // Send the data to the collector
@@ -384,20 +458,7 @@ class Spyglasses {
                 'Content-Type' => 'application/json',
                 'x-api-key' => $this->api_key
             ),
-            'body' => json_encode([
-                'url' => $url,
-                'user_agent' => $user_agent,
-                'ip_address' => $this->get_client_ip(),
-                'request_method' => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET',
-                'request_path' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/',
-                'request_query' => isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : '',
-                'request_body' => '', // Add empty request body
-                'response_status' => $status_code,
-                'response_time_ms' => $response_time,
-                'headers' => $this->get_headers(),
-                'timestamp' => gmdate('Y-m-d\TH:i:s\Z'),
-                'metadata' => $metadata
-            ]),
+            'body' => json_encode($request_data),
             'cookies' => array()
         ));
 
@@ -410,7 +471,11 @@ class Spyglasses {
                 if ($code >= 400) {
                     error_log("Spyglasses API error (HTTP $code): $body");
                 } elseif ($was_blocked) {
-                    error_log("Spyglasses blocked bot: $user_agent");
+                    if ($source_type === 'bot') {
+                        error_log("Spyglasses blocked bot: $user_agent");
+                    } else if ($source_type === 'referrer') {
+                        error_log("Spyglasses blocked AI referrer: $referrer");
+                    }
                 }
             }
         }
@@ -471,5 +536,27 @@ class Spyglasses {
         }
         
         return $headers;
+    }
+
+    /**
+     * Log the bot visit to the Spyglasses collector
+     * 
+     * @param string $user_agent The user agent string
+     * @param array $bot_info Information about the bot
+     * @param bool $was_blocked Whether the bot was blocked
+     */
+    private function log_bot_visit($user_agent, $bot_info, $was_blocked = false) {
+        $this->log_visit('bot', $bot_info, $user_agent, '', $was_blocked);
+    }
+
+    /**
+     * Log the referrer visit to the Spyglasses collector
+     * 
+     * @param string $referrer The referrer URL
+     * @param array $referrer_info Information about the referrer
+     * @param bool $was_blocked Whether the request was blocked
+     */
+    private function log_referrer_visit($referrer, $referrer_info, $was_blocked = false) {
+        $this->log_visit('referrer', $referrer_info, '', $referrer, $was_blocked);
     }
 } 
