@@ -77,8 +77,29 @@ class Spyglasses {
         $this->api_key = get_option('spyglasses_api_key', '');
         $this->debug_mode = get_option('spyglasses_debug_mode', 'no') === 'yes';
         $this->block_ai_model_trainers = get_option('spyglasses_block_ai_model_trainers', 'no') === 'yes';
-        $this->custom_blocks = json_decode(get_option('spyglasses_custom_blocks', '[]'), true);
-        $this->custom_allows = json_decode(get_option('spyglasses_custom_allows', '[]'), true);
+        
+        // Ensure custom blocks and allows are proper arrays
+        $custom_blocks_option = get_option('spyglasses_custom_blocks', '[]');
+        $custom_allows_option = get_option('spyglasses_custom_allows', '[]');
+        
+        if (!is_array($custom_blocks_option)) {
+            $this->custom_blocks = json_decode($custom_blocks_option, true);
+            if (!is_array($this->custom_blocks)) {
+                $this->custom_blocks = array(); // Fallback to empty array if JSON decode fails
+            }
+        } else {
+            $this->custom_blocks = $custom_blocks_option;
+        }
+        
+        if (!is_array($custom_allows_option)) {
+            $this->custom_allows = json_decode($custom_allows_option, true);
+            if (!is_array($this->custom_allows)) {
+                $this->custom_allows = array(); // Fallback to empty array if JSON decode fails
+            }
+        } else {
+            $this->custom_allows = $custom_allows_option;
+        }
+        
         $auto_sync = get_option('spyglasses_auto_sync_patterns', 'yes') === 'yes';
         
         // Load agent patterns

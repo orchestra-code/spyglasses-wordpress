@@ -489,8 +489,28 @@ class Spyglasses_Admin {
             return;
         }
         
-        $custom_blocks = get_option('spyglasses_custom_blocks', array());
-        $custom_allows = get_option('spyglasses_custom_allows', array());
+        // Make sure we always have arrays for the custom blocks and allows
+        $custom_blocks_option = get_option('spyglasses_custom_blocks', '[]');
+        $custom_allows_option = get_option('spyglasses_custom_allows', '[]');
+        
+        // Handle case where these might be stored as strings instead of arrays
+        if (!is_array($custom_blocks_option)) {
+            $custom_blocks = json_decode($custom_blocks_option, true);
+            if (!is_array($custom_blocks)) {
+                $custom_blocks = array(); // Fallback to empty array if JSON decode fails
+            }
+        } else {
+            $custom_blocks = $custom_blocks_option;
+        }
+        
+        if (!is_array($custom_allows_option)) {
+            $custom_allows = json_decode($custom_allows_option, true);
+            if (!is_array($custom_allows)) {
+                $custom_allows = array(); // Fallback to empty array if JSON decode fails
+            }
+        } else {
+            $custom_allows = $custom_allows_option;
+        }
         
         echo '<div class="spyglasses-patterns-wrapper">';
         echo '<div class="spyglasses-tabs">';

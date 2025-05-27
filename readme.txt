@@ -3,7 +3,7 @@ Contributors: orchestraai
 Tags: bot detection, ai detection, security, analytics, claude, perplexity
 Requires at least: 5.0
 Tested up to: 6.4
-Stable tag: 0.3.0
+Stable tag: 0.3.2
 Requires PHP: 7.2
 License: MIT
 License URI: https://opensource.org/licenses/MIT
@@ -105,6 +105,11 @@ After reproducing the issue, check the debug.log file for messages starting with
 
 == Changelog ==
 
+= 0.3.2 =
+* Fixed a bug with custom block and allow settings that could cause errors
+* Improved handling of settings data for better stability
+* Don't log visits for WordPress internal cron checks
+
 = 0.3.1 =
 * Don't log visits for WordPress internal cron checks.
 
@@ -131,6 +136,9 @@ After reproducing the issue, check the debug.log file for messages starting with
 * Added manual sync option in settings
 
 == Upgrade Notice ==
+
+= 0.3.2 =
+Important bugfix: Fixes an issue that could cause "Custom Blocking Rules" settings to fail with an error.
 
 = 0.3.1 =
 Ignore WordPress internal cron requests.
