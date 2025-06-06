@@ -65,10 +65,12 @@ class Spyglasses_Admin {
             'default' => 'no'
         ));
         register_setting('spyglasses_settings', 'spyglasses_custom_blocks', array(
-            'default' => array()
+            'default' => '[]',
+            'sanitize_callback' => array($this, 'sanitize_json_array')
         ));
         register_setting('spyglasses_settings', 'spyglasses_custom_allows', array(
-            'default' => array()
+            'default' => '[]',
+            'sanitize_callback' => array($this, 'sanitize_json_array')
         ));
         
         add_settings_section(
@@ -149,6 +151,42 @@ class Spyglasses_Admin {
             'spyglasses',
             'spyglasses_referrers_section'
         );
+    }
+
+    /**
+     * Sanitize JSON array input
+     * 
+     * @param mixed $input The input to sanitize
+     * @return string JSON string of sanitized array
+     */
+    public function sanitize_json_array($input) {
+        // If it's already a string (JSON), decode it first
+        if (is_string($input)) {
+            $decoded = json_decode($input, true);
+            if (is_array($decoded)) {
+                $input = $decoded;
+            } else {
+                return '[]'; // Return empty array if decoding fails
+            }
+        }
+        
+        // If it's not an array, return empty array
+        if (!is_array($input)) {
+            return '[]';
+        }
+        
+        // Sanitize each item in the array
+        $sanitized = array_map('sanitize_text_field', $input);
+        
+        // Remove empty items
+        $sanitized = array_filter($sanitized, function($item) {
+            return !empty(trim($item));
+        });
+        
+        // Re-index array to avoid gaps
+        $sanitized = array_values($sanitized);
+        
+        return json_encode($sanitized);
     }
 
     /**

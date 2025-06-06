@@ -9,6 +9,10 @@
  * License: MIT
  * License URI: https://opensource.org/licenses/MIT
  * Text Domain: spyglasses
+ * Requires at least: 5.0
+ * Tested up to: 6.4
+ * Requires PHP: 7.4
+ * Network: false
  */
 
 // Exit if accessed directly
@@ -62,9 +66,12 @@ function spyglasses_activate() {
         wp_schedule_event(time(), 'daily', 'spyglasses_update_patterns');
     }
     
-    // Trigger initial pattern update
-    $spyglasses = new Spyglasses();
-    $spyglasses->update_agent_patterns();
+    // Trigger initial pattern update if we have an API key
+    $api_key = get_option('spyglasses_api_key', '');
+    if (!empty($api_key)) {
+        $spyglasses = new Spyglasses();
+        $spyglasses->update_agent_patterns();
+    }
 }
 
 /**
@@ -94,7 +101,14 @@ function spyglasses_uninstall() {
     delete_option('spyglasses_block_ai_model_trainers');
     delete_option('spyglasses_custom_blocks');
     delete_option('spyglasses_custom_allows');
+    delete_option('spyglasses_last_pattern_sync');
     
     // Remove transient cache
     delete_transient('spyglasses_agent_patterns');
+    
+    // Remove custom log file if it exists
+    $log_file = WP_CONTENT_DIR . '/spyglasses-debug.log';
+    if (file_exists($log_file)) {
+        unlink($log_file);
+    }
 } 

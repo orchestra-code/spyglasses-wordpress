@@ -1,14 +1,14 @@
 === Spyglasses - Bot & AI Agent Detection ===
 Contributors: orchestraai
-Tags: bot detection, ai detection, security, analytics, claude, perplexity
+Tags: bot detection, ai detection, security, analytics, ai blocking
 Requires at least: 5.0
-Tested up to: 6.4
-Stable tag: 0.3.2
+Tested up to: 6.8.1
+Stable tag: 1.0.0
 Requires PHP: 7.2
 License: MIT
 License URI: https://opensource.org/licenses/MIT
 
-Advanced AI agent detection for WordPress. Detect and monitor traffic from AI assistants like Claude, Perplexity, and track visitors from AI-generated content.
+AI agent and bot detection for WordPress. Detect and monitor traffic from AI assistants like ChatGPT, Claude, Perplexity. Block AI model trainers.
 
 == Description ==
 
@@ -26,6 +26,8 @@ Spyglasses provides advanced detection for AI agents, bots, and AI referrer traf
 * **Easy Setup**: Simple configuration with just an API key
 * **Auto-Updating Patterns**: Automatically syncs with latest AI detection patterns daily
 * **Smart Filtering**: Automatically excludes WordPress internal processes to prevent log pollution
+* **Cache-Friendly**: Fully compatible with all major caching plugins including LiteSpeed Cache, WP Super Cache, W3TC, WP Rocket, and more
+* **Reliable Fallbacks**: Local pattern storage ensures detection continues working even during API outages
 
 ### How It Works
 
@@ -55,7 +57,7 @@ Spyglasses only collects information about AI-related traffic, not about your re
 
 Yes, you'll need to sign up for a Spyglasses account at [spyglasses.io](https://www.spyglasses.io) to get an API key.
 
-= Does this slow down my website? =
+= Will this slow down my website? =
 
 No, Spyglasses is designed to be lightweight and only processes requests from detected AI agents and referrers. It has minimal impact on your site's performance.
 
@@ -75,25 +77,31 @@ You can view all data collected in your Spyglasses dashboard. Log in to your acc
 
 = How does bot blocking work? =
 
-You can block bots at several levels: globally (all AI model trainers), by category, by subcategory, by bot type, or by specific pattern. Blocked bots receive a 403 Forbidden response. Note that AI referrer traffic (humans from AI platforms) is never blocked.
+You can block bots at several levels: all AI model trainers, by category, by subcategory, by bot type, or by specific pattern. Blocked bots receive a 403 Forbidden response. Note that AI referrer traffic (humans from AI platforms) is never blocked.
 
 = Is this compatible with caching plugins? =
 
-Yes, Spyglasses works with most caching plugins as it operates at the WordPress level, not the browser level.
+Yes, Spyglasses is fully compatible with all major caching plugins including LiteSpeed Cache, WP Super Cache, W3 Total Cache, WP Rocket, and others. The plugin automatically sets appropriate cache headers to ensure accurate detection while maintaining optimal performance.
 
 = How are the detection patterns updated? =
 
-By default, Spyglasses automatically syncs agent detection patterns daily from our API. This ensures you always have the latest patterns for new AI agents and referrers. You can also manually sync patterns from the settings page or disable automatic syncing if you prefer.
+By default, Spyglasses automatically syncs agent detection patterns daily from our API. This ensures you always have the latest patterns for new AI agents and referrers. You can manually sync patterns from the settings page or disable automatic syncing if you prefer.
 
 = How do I troubleshoot issues with Spyglasses? =
 
-If you encounter problems (such as sync errors), enable "Debug Mode" in the Spyglasses settings page. This will log detailed error messages to your WordPress error log (usually at wp-content/debug.log).
+If you encounter problems, enable "Debug Mode" in the Spyglasses settings page. This creates a detailed debug log at `wp-content/spyglasses-debug.log` with information about plugin operations, pattern loading, and detection events.
 
-To ensure logging works, add these lines to your wp-config.php if they are not already present:
+You can also enable WordPress debug logging by adding these lines to your wp-config.php:
+```
 define('WP_DEBUG', true);
 define('WP_DEBUG_LOG', true);
+```
+
+After reproducing the issue, check both the Spyglasses debug log and the WordPress debug log (usually at `wp-content/debug.log`) for error messages. Look for messages starting with "Spyglasses:" and share them with support if needed.
 
 After reproducing the issue, check the debug.log file for messages starting with "Spyglasses:" and share them with support if needed.
+
+Remember to disable debug logging when you have fixed the issue, as excessive logging can affect site performance.
 
 == Screenshots ==
 
@@ -104,6 +112,14 @@ After reproducing the issue, check the debug.log file for messages starting with
 5. AI referrer tracking
 
 == Changelog ==
+
+= 1.0.0 =
+* Major stability improvements for sites using caching plugins
+* Enhanced cache compatibility with proper header management
+* Improved error handling and recovery mechanisms
+* Added local pattern storage as fallback during API outages
+* Fixed detection issues on sites with aggressive caching configurations
+* Enhanced debug logging with dedicated log file for better troubleshooting
 
 = 0.3.2 =
 * Fixed a bug with custom block and allow settings that could cause errors
@@ -136,6 +152,9 @@ After reproducing the issue, check the debug.log file for messages starting with
 * Added manual sync option in settings
 
 == Upgrade Notice ==
+
+= 1.0.0 =
+Major update with improved caching plugin compatibility and enhanced reliability. Fixes detection issues on sites with aggressive caching and adds better error recovery.
 
 = 0.3.2 =
 Important bugfix: Fixes an issue that could cause "Custom Blocking Rules" settings to fail with an error.

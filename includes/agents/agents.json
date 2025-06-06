@@ -2,25 +2,145 @@
   "version": "1.0.0",
   "patterns": [
     {
+      "pattern": "ChatGPT-User\\/[0-9]",
+      "url": "https://platform.openai.com/docs/bots",
+      "type": "chatgpt-user",
+      "category": "AI Agent",
+      "subcategory": "AI Assistants",
+      "company": "OpenAI",
+      "isCompliant": true,
+      "isAiModelTrainer": false,
+      "intent": "UserQuery"
+    },
+    {
       "pattern": "Perplexity-User\\/[0-9]",
       "url": "https://docs.perplexity.ai/guides/bots",
-      "instances": [
-        "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Perplexity-User/1.0; +https://perplexity.ai/perplexity-user)"
-      ]
+      "type": "perplexity-user",
+      "category": "AI Agent",
+      "subcategory": "AI Assistants",
+      "company": "Perplexity AI",
+      "isCompliant": true,
+      "isAiModelTrainer": false,
+      "intent": "UserQuery"
+    },
+    {
+      "pattern": "Gemini-User\\/[0-9]",
+      "url": "https://ai.google.dev/gemini-api/docs/bots",
+      "type": "gemini-user",
+      "category": "AI Agent",
+      "subcategory": "AI Assistants",
+      "company": "Google",
+      "isCompliant": true,
+      "isAiModelTrainer": false,
+      "intent": "UserQuery"
     },
     {
       "pattern": "Claude-User\\/[0-9]",
       "url": "https://support.anthropic.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler",
-      "instances": [
-        "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; Claude-User/1.0; +https://anthropic.com/claude"
-      ]
+      "type": "claude-user",
+      "category": "AI Agent",
+      "subcategory": "AI Assistants",
+      "company": "Anthropic",
+      "isCompliant": true,
+      "isAiModelTrainer": false,
+      "intent": "UserQuery"
     },
     {
-      "pattern": "Claude-SearchBot\\/[0-9]",
+      "pattern": "CCBot\\/[0-9]",
+      "url": "https://commoncrawl.org/ccbot",
+      "type": "ccbot",
+      "category": "AI Crawler",
+      "subcategory": "Model Training Crawlers",
+      "company": "Common Crawl",
+      "isCompliant": true,
+      "isAiModelTrainer": true,
+      "intent": "DataCollection"
+    },
+    {
+      "pattern": "ClaudeBot\\/[0-9]",
       "url": "https://support.anthropic.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler",
-      "instances": [
-        "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; Claude-SearchBot/1.0; +https://anthropic.com/claude"
-      ]
+      "type": "claude-bot",
+      "category": "AI Crawler",
+      "subcategory": "Model Training Crawlers",
+      "company": "Anthropic",
+      "isCompliant": true,
+      "isAiModelTrainer": true,
+      "intent": "DataCollection"
+    },
+    {
+      "pattern": "GPTBot\\/[0-9]",
+      "url": "https://platform.openai.com/docs/gptbot",
+      "type": "gptbot",
+      "category": "AI Crawler",
+      "subcategory": "Model Training Crawlers",
+      "company": "OpenAI",
+      "isCompliant": true,
+      "isAiModelTrainer": true,
+      "intent": "DataCollection"
+    },
+    {
+      "pattern": "meta-externalagent\\/[0-9]",
+      "url": "https://developers.facebook.com/docs/sharing/webmasters/crawler",
+      "type": "meta-externalagent",
+      "category": "AI Crawler",
+      "subcategory": "Model Training Crawlers",
+      "company": "Meta",
+      "isCompliant": true,
+      "isAiModelTrainer": true,
+      "intent": "DataCollection"
+    },
+    {
+      "pattern": "Applebot-Extended\\/[0-9]",
+      "url": "https://support.apple.com/en-us/119829",
+      "type": "applebot-extended",
+      "category": "AI Crawler",
+      "subcategory": "Model Training Crawlers",
+      "company": "Apple",
+      "isCompliant": true,
+      "isAiModelTrainer": true,
+      "intent": "DataCollection"
+    }
+  ],
+  "aiReferrers": [
+    {
+      "id": "chatgpt",
+      "name": "ChatGPT",
+      "company": "OpenAI",
+      "url": "https://chat.openai.com",
+      "patterns": ["chat.openai.com", "chatgpt.com"],
+      "description": "Traffic from ChatGPT users clicking on links"
+    },
+    {
+      "id": "claude",
+      "name": "Claude",
+      "company": "Anthropic",
+      "url": "https://claude.ai",
+      "patterns": ["claude.ai"],
+      "description": "Traffic from Claude users clicking on links"
+    },
+    {
+      "id": "perplexity",
+      "name": "Perplexity",
+      "company": "Perplexity AI",
+      "url": "https://perplexity.ai",
+      "patterns": ["perplexity.ai"],
+      "description": "Traffic from Perplexity users clicking on links"
+    },
+    {
+      "id": "gemini",
+      "name": "Gemini",
+      "company": "Google",
+      "url": "https://gemini.google.com",
+      "patterns": ["gemini.google.com", "bard.google.com"],
+      "description": "Traffic from Gemini users clicking on links"
+    },
+    {
+      "id": "copilot",
+      "name": "Microsoft Copilot",
+      "company": "Microsoft",
+      "url": "https://copilot.microsoft.com/",
+      "patterns": ["copilot.microsoft.com", "bing.com/chat"],
+      "description": "Traffic from Microsoft Copilot users clicking on links"
     }
   ]
 } 
