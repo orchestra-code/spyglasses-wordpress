@@ -3,15 +3,15 @@
  * Plugin Name: Spyglasses
  * Plugin URI: https://www.spyglasses.io
  * Description: Advanced bot and AI agent detection for WordPress websites.
- * Version: 0.3.2
+ * Version: 1.0.1
  * Author: Orchestra AI, Inc.
  * Author URI: https://www.spyglasses.io
  * License: MIT
  * License URI: https://opensource.org/licenses/MIT
  * Text Domain: spyglasses
  * Requires at least: 5.0
- * Tested up to: 6.4
- * Requires PHP: 7.4
+ * Tested up to: 6.8.1
+ * Requires PHP: 7.2
  * Network: false
  */
 
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('SPYGLASSES_VERSION', '0.3.2');
+define('SPYGLASSES_VERSION', '1.0.1');
 define('SPYGLASSES_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SPYGLASSES_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('SPYGLASSES_COLLECTOR_ENDPOINT', 'https://www.spyglasses.io/api/collect');

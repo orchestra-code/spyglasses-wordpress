@@ -393,6 +393,14 @@ class Spyglasses_Admin {
             <div class="spyglasses-admin-footer">
                 <h2><?php _e('About Spyglasses', 'spyglasses'); ?></h2>
                 <p>
+                    <?php 
+                    echo sprintf(
+                        __('Installed version: %s', 'spyglasses'),
+                        SPYGLASSES_VERSION
+                    ); 
+                    ?>
+                </p>
+                <p>
                     <?php _e('Spyglasses is a powerful tool that helps you detect and monitor AI agents and bots that visit your site. With Spyglasses, you can:', 'spyglasses'); ?>
                 </p>
                 <ul class="spyglasses-features">

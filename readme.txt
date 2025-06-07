@@ -3,7 +3,7 @@ Contributors: orchestraai
 Tags: bot detection, ai detection, security, analytics, ai blocking
 Requires at least: 5.0
 Tested up to: 6.8.1
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 Requires PHP: 7.2
 License: MIT
 License URI: https://opensource.org/licenses/MIT
@@ -112,6 +112,9 @@ Remember to disable debug logging when you have fixed the issue, as excessive lo
 5. AI referrer tracking
 
 == Changelog ==
+
+= 1.0.1 =
+* Tweaks to caching for better bot detection
 
 = 1.0.0 =
 * Major stability improvements for sites using caching plugins
