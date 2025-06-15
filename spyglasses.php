@@ -2,17 +2,16 @@
 /**
  * Plugin Name: Spyglasses
  * Plugin URI: https://www.spyglasses.io
- * Description: Advanced bot and AI agent detection for WordPress websites.
- * Version: 0.3.2
+ * Description: Detect, block and log your website's AI traffic.
+ * Version: 1.1.2
  * Author: Orchestra AI, Inc.
  * Author URI: https://www.spyglasses.io
  * License: MIT
  * License URI: https://opensource.org/licenses/MIT
  * Text Domain: spyglasses
  * Requires at least: 5.0
- * Tested up to: 6.4
- * Requires PHP: 7.4
- * Network: false
+ * Tested up to: 6.8
+ * Requires PHP: 7.2
  */
 
 // Exit if accessed directly
@@ -21,7 +20,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('SPYGLASSES_VERSION', '0.3.2');
+define('SPYGLASSES_VERSION', '1.1.2');
 define('SPYGLASSES_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SPYGLASSES_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('SPYGLASSES_COLLECTOR_ENDPOINT', 'https://www.spyglasses.io/api/collect');
@@ -101,6 +100,6 @@ function spyglasses_uninstall() {
     // Remove custom log file if it exists
     $log_file = WP_CONTENT_DIR . '/spyglasses-debug.log';
     if (file_exists($log_file)) {
-        unlink($log_file);
+        wp_delete_file($log_file);
     }
 } 

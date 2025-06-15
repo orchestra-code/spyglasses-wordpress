@@ -128,7 +128,10 @@ class Spyglasses {
             $this->debug_log('Spyglasses init() completed successfully');
         } catch (Exception $e) {
             $this->debug_log('FATAL ERROR in init(): ' . $e->getMessage());
-            error_log('Spyglasses FATAL ERROR in init(): ' . $e->getMessage());
+            // Log fatal errors even when debug mode is off
+            if (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
+                error_log('Spyglasses FATAL ERROR in init(): ' . $e->getMessage());
+            }
         }
     }
 
@@ -190,17 +193,32 @@ class Spyglasses {
             $timestamp = current_time('Y-m-d H:i:s');
             $log_entry = "[{$timestamp}] {$message}\n";
             
-            // Write to custom log file
-            if (is_writable(dirname($this->log_file)) || is_writable($this->log_file)) {
-                file_put_contents($this->log_file, $log_entry, FILE_APPEND | LOCK_EX);
+            global $wp_filesystem;
+            if (empty($wp_filesystem)) {
+                require_once ABSPATH . '/wp-admin/includes/file.php';
+                WP_Filesystem();
             }
             
-            // Also log to WordPress error log as backup
-            error_log('Spyglasses: ' . $message);
+            if ($wp_filesystem && $wp_filesystem->exists(dirname($this->log_file))) {
+                // Check if we can write to the directory or file
+                if ($wp_filesystem->is_writable(dirname($this->log_file)) || 
+                    ($wp_filesystem->exists($this->log_file) && $wp_filesystem->is_writable($this->log_file))) {
+                    
+                    $existing_content = $wp_filesystem->exists($this->log_file) ? $wp_filesystem->get_contents($this->log_file) : '';
+                    $wp_filesystem->put_contents($this->log_file, $existing_content . $log_entry, FS_CHMOD_FILE);
+                }
+            }
+            
+            // Also log to WordPress debug log if WP_DEBUG_LOG is enabled
+            if (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
+                error_log('Spyglasses: ' . $message);
+            }
         } catch (Exception $e) {
-            // Fallback to error_log only
-            error_log('Spyglasses: ' . $message);
-            error_log('Spyglasses: Failed to write to custom log: ' . $e->getMessage());
+            // Fallback to debug log only if WP_DEBUG_LOG is enabled
+            if (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
+                error_log('Spyglasses: ' . $message);
+                error_log('Spyglasses: Failed to write to custom log: ' . $e->getMessage());
+            }
         }
     }
 
@@ -361,16 +379,16 @@ class Spyglasses {
                 return;
             }
 
-            // Skip WordPress cron requests (simple URL check)
-            $request_uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+            // Skip WordPress cron requests (simple URL check) - sanitize REQUEST_URI
+            $request_uri = isset($_SERVER['REQUEST_URI']) ? sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI'])) : '';
             if (strpos($request_uri, 'wp-cron.php') !== false) {
                 $this->debug_log('Skipping detection - WordPress cron request');
                 return;
             }
 
-            // Get user agent and referrer
-            $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '';
-            $referrer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
+            // Get user agent and referrer - sanitize server variables
+            $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])) : '';
+            $referrer = isset($_SERVER['HTTP_REFERER']) ? esc_url_raw(wp_unslash($_SERVER['HTTP_REFERER'])) : '';
             
             $this->debug_log('Processing request - UA: ' . substr($user_agent, 0, 100) . '..., Referrer: ' . $referrer);
             
@@ -480,7 +498,10 @@ class Spyglasses {
             }
         } catch (Exception $e) {
             $this->debug_log('FATAL ERROR in detect_bot(): ' . $e->getMessage());
-            error_log('Spyglasses FATAL ERROR in detect_bot(): ' . $e->getMessage());
+            // Log fatal errors even when debug mode is off
+            if (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
+                error_log('Spyglasses FATAL ERROR in detect_bot(): ' . $e->getMessage());
+            }
         }
     }
 
@@ -570,8 +591,12 @@ class Spyglasses {
             // Start timing the response (like working version)
             $start_time = microtime(true);
             
-            // Prepare payload
-            $url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+            // Prepare payload - sanitize all server variables
+            $https = isset($_SERVER['HTTPS']) ? sanitize_text_field(wp_unslash($_SERVER['HTTPS'])) : '';
+            $http_host = isset($_SERVER['HTTP_HOST']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_HOST'])) : '';
+            $request_uri = isset($_SERVER['REQUEST_URI']) ? sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI'])) : '';
+            
+            $url = ($https === 'on' ? "https" : "http") . "://" . $http_host . $request_uri;
             
             // Get HTTP status code 
             $status_code = $was_blocked ? 403 : http_response_code();
@@ -582,12 +607,12 @@ class Spyglasses {
             
             // Use the working version's payload structure
             $request_data = array(
-                'url' => $url,
-                'user_agent' => !empty($user_agent) ? $user_agent : (isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : ''),
+                'url' => esc_url_raw($url),
+                'user_agent' => !empty($user_agent) ? $user_agent : (isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])) : ''),
                 'ip_address' => $this->get_client_ip(),
-                'request_method' => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET',
-                'request_path' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/',
-                'request_query' => isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : '',
+                'request_method' => isset($_SERVER['REQUEST_METHOD']) ? sanitize_text_field(wp_unslash($_SERVER['REQUEST_METHOD'])) : 'GET',
+                'request_path' => isset($_SERVER['REQUEST_URI']) ? sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI'])) : '/',
+                'request_query' => isset($_SERVER['QUERY_STRING']) ? sanitize_text_field(wp_unslash($_SERVER['QUERY_STRING'])) : '',
                 'request_body' => '', // Add empty request body
                 'response_status' => $status_code,
                 'response_time_ms' => $response_time,
@@ -604,16 +629,16 @@ class Spyglasses {
             } else if ($source_type === 'referrer') {
                 $request_data['metadata'] = array(
                     'source_type' => 'ai_referrer',
-                    'referrer_id' => $info['id'],
-                    'referrer_name' => $info['name'],
-                    'company' => $info['company'],
+                    'referrer_id' => sanitize_text_field($info['id']),
+                    'referrer_name' => sanitize_text_field($info['name']),
+                    'company' => sanitize_text_field($info['company']),
                     'was_blocked' => $was_blocked
                 );
             }
             
             // Add referrer if available
             if (!empty($referrer)) {
-                $request_data['referrer'] = $referrer;
+                $request_data['referrer'] = esc_url_raw($referrer);
             }
             
             do_action('spyglasses_before_api_request', SPYGLASSES_COLLECTOR_ENDPOINT, array(
@@ -685,11 +710,11 @@ class Spyglasses {
         $ip = '';
         
         if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
-            $ip = $_SERVER['HTTP_CLIENT_IP'];
+            $ip = sanitize_text_field(wp_unslash($_SERVER['HTTP_CLIENT_IP']));
         } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+            $ip = sanitize_text_field(wp_unslash($_SERVER['HTTP_X_FORWARDED_FOR']));
         } elseif (!empty($_SERVER['REMOTE_ADDR'])) {
-            $ip = $_SERVER['REMOTE_ADDR'];
+            $ip = sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR']));
         }
         
         return $ip;
@@ -705,7 +730,8 @@ class Spyglasses {
         
         foreach ($_SERVER as $name => $value) {
             if (substr($name, 0, 5) == 'HTTP_') {
-                $headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
+                $header_name = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))));
+                $headers[sanitize_text_field($header_name)] = sanitize_text_field(wp_unslash($value));
             }
         }
         
@@ -773,7 +799,11 @@ class Spyglasses {
         // LiteSpeed Cache specific: force cache variation by User-Agent hash
         if (function_exists('add_filter') && isset($_SERVER['HTTP_USER_AGENT'])) {
             add_filter('litespeed_vary', function($list) {
-                $list['ua'] = substr(md5($_SERVER['HTTP_USER_AGENT']), 0, 8);
+                // Validate $_SERVER access before use
+                if (isset($_SERVER['HTTP_USER_AGENT'])) {
+                    $user_agent = sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT']));
+                    $list['ua'] = substr(md5($user_agent), 0, 8);
+                }
                 return $list;
             });
             
@@ -799,5 +829,41 @@ class Spyglasses {
                 header('Vary: User-Agent');
             }
         }
+    }
+
+    /**
+     * Make API request to collect visitor data
+     */
+    private function send_to_api($data) {
+        $api_key = get_option('spyglasses_api_key', '');
+        
+        if (empty($api_key)) {
+            $this->debug_log('No API key configured');
+            return false;
+        }
+        
+        $api_url = SPYGLASSES_COLLECTOR_ENDPOINT;
+        
+        $body = wp_json_encode($data);
+        
+        $args = array(
+            'body' => $body,
+            'headers' => array(
+                'Content-Type' => 'application/json',
+                'User-Agent' => 'Spyglasses WordPress Plugin/' . SPYGLASSES_VERSION,
+                'X-API-Key' => $api_key,
+            ),
+            'timeout' => 5,
+            'blocking' => false, // Non-blocking request
+        );
+        
+        $response = wp_remote_post($api_url, $args);
+        
+        if (is_wp_error($response)) {
+            $this->debug_log('API request failed: ' . $response->get_error_message());
+            return false;
+        }
+        
+        return true;
     }
 } 

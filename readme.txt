@@ -1,10 +1,10 @@
-=== Spyglasses - Bot & AI Agent Detection ===
+=== Spyglasses ===
 Contributors: orchestraai
-Tags: bot detection, ai detection, security, analytics, ai blocking
+Tags: bot detection, ai agents, security, analytics, crawlers
 Requires at least: 5.0
 Tested up to: 6.8
-Stable tag: 1.1.0
 Requires PHP: 7.2
+Stable tag: 1.1.2
 License: MIT
 License URI: https://opensource.org/licenses/MIT
 
@@ -12,7 +12,7 @@ AI agent and bot detection for WordPress. Detect and monitor traffic from AI ass
 
 == Description ==
 
-Spyglasses provides advanced detection for AI agents, bots, and AI referrer traffic that interacts with your WordPress site. With the increasing use of AI browsing assistants and AI content tools, it's becoming more important to understand how these technologies interact with your content.
+Spyglasses provides advanced detection for AI agents, bots, and AI referrer traffic that interacts with your WordPress site. 
 
 ### Key Features
 
