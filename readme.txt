@@ -2,8 +2,8 @@
 Contributors: orchestraai
 Tags: bot detection, ai detection, security, analytics, ai blocking
 Requires at least: 5.0
-Tested up to: 6.8.1
-Stable tag: 1.0.1
+Tested up to: 6.8
+Stable tag: 1.1.0
 Requires PHP: 7.2
 License: MIT
 License URI: https://opensource.org/licenses/MIT
@@ -22,6 +22,7 @@ Spyglasses provides advanced detection for AI agents, bots, and AI referrer traf
 * **Bot Blocking**: Selectively block specific AI agents or entire categories of bots
 * **AI Model Trainer Protection**: Prevent AI systems from scraping your content for model training
 * **Dashboard Insights**: View detailed analytics on AI traffic via the Spyglasses dashboard
+* **Central Management**: Configure all blocking settings from your Spyglasses dashboard
 * **Lightweight**: Minimal impact on site performance and user experience
 * **Easy Setup**: Simple configuration with just an API key
 * **Auto-Updating Patterns**: Automatically syncs with latest AI detection patterns daily
@@ -36,7 +37,7 @@ Spyglasses uses pattern recognition to identify:
 1. **AI agents and bots** visiting your site through user-agent detection
 2. **Human visitors from AI platforms** through referrer detection
 
-When AI-related traffic is detected, information about the visit is securely sent to the Spyglasses collector for analysis and reporting. You can also choose to block specific types of bots from accessing your site.
+When AI-related traffic is detected, information about the visit is securely sent to the Spyglasses collector for analysis and reporting. You can also choose to block specific types of bots from accessing your site through your Spyglasses dashboard.
 
 ### Privacy & Transparency
 
@@ -49,7 +50,7 @@ Spyglasses only collects information about AI-related traffic, not about your re
 3. Go to Settings > Spyglasses to configure the plugin
 4. Enter your Spyglasses API key
 5. That's it! Spyglasses will now detect and monitor AI-related traffic to your site
-6. Optionally, configure blocking rules to prevent specific bots from accessing your content
+6. Configure blocking rules in your Spyglasses dashboard at [spyglasses.io](https://www.spyglasses.io/app)
 
 == Frequently Asked Questions ==
 
@@ -77,7 +78,11 @@ You can view all data collected in your Spyglasses dashboard. Log in to your acc
 
 = How does bot blocking work? =
 
-You can block bots at several levels: all AI model trainers, by category, by subcategory, by bot type, or by specific pattern. Blocked bots receive a 403 Forbidden response. Note that AI referrer traffic (humans from AI platforms) is never blocked.
+Bot blocking settings are managed centrally through your Spyglasses dashboard. You can block bots at several levels: all AI model trainers, by category, by subcategory, by bot type, or by specific pattern. Blocked bots receive a 403 Forbidden response. Note that AI referrer traffic (humans from AI platforms) is never blocked.
+
+= Where do I configure blocking settings? =
+
+All blocking settings are now managed centrally through your Spyglasses dashboard at [spyglasses.io/app](https://www.spyglasses.io/app). This allows you to configure settings once and have them apply to all your WordPress sites using Spyglasses.
 
 = Is this compatible with caching plugins? =
 
@@ -112,6 +117,15 @@ Remember to disable debug logging when you have fixed the issue, as excessive lo
 5. AI referrer tracking
 
 == Changelog ==
+
+= 1.1.0 =
+* **Major Update: Central Management**
+* Bot blocking settings are now managed centrally through your Spyglasses dashboard
+* Simplified WordPress admin interface - no more complex blocking configuration in WordPress
+* All blocking rules, AI model trainer settings, and custom patterns are now configured at spyglasses.io/app
+* Settings automatically sync across all your WordPress sites
+* Improved reliability and consistency of blocking rules
+* Backward compatibility maintained - existing local settings will be migrated automatically
 
 = 1.0.1 =
 * Tweaks to caching for better bot detection
@@ -155,6 +169,9 @@ Remember to disable debug logging when you have fixed the issue, as excessive lo
 * Added manual sync option in settings
 
 == Upgrade Notice ==
+
+= 1.1.0 =
+Important update: Bot blocking settings are now managed centrally through your Spyglasses dashboard. Visit spyglasses.io/app to configure your blocking rules. This provides better consistency and allows you to manage all your sites from one place.
 
 = 1.0.0 =
 Major update with improved caching plugin compatibility and enhanced reliability. Fixes detection issues on sites with aggressive caching and adds better error recovery.

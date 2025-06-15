@@ -63,6 +63,13 @@ class Spyglasses {
     private $ai_referrers;
     
     /**
+     * Property settings from API
+     *
+     * @var array
+     */
+    private $property_settings;
+    
+    /**
      * Patterns API endpoint
      * 
      * @var string
@@ -87,22 +94,17 @@ class Spyglasses {
             // Get settings with error handling
             $this->api_key = get_option('spyglasses_api_key', '');
             $this->debug_mode = get_option('spyglasses_debug_mode', 'no') === 'yes';
-            $this->block_ai_model_trainers = get_option('spyglasses_block_ai_model_trainers', 'no') === 'yes';
             
             $this->debug_log('Spyglasses init() started');
-            $this->debug_log('Settings loaded - API Key: ' . (!empty($this->api_key) ? 'SET' : 'NOT SET') . ', Debug: ' . ($this->debug_mode ? 'ON' : 'OFF') . ', Block AI Trainers: ' . ($this->block_ai_model_trainers ? 'ON' : 'OFF'));
+            $this->debug_log('Settings loaded - API Key: ' . (!empty($this->api_key) ? 'SET' : 'NOT SET') . ', Debug: ' . ($this->debug_mode ? 'ON' : 'OFF'));
             
-            // Ensure custom blocks and allows are proper arrays with better error handling
+            // Load custom rules and property settings from central management
             $this->load_custom_rules();
             
             $auto_sync = get_option('spyglasses_auto_sync_patterns', 'yes') === 'yes';
             
             // Load agent patterns
             $this->load_agent_patterns();
-            
-            // CRITICAL FIX: Set Vary headers very early for ALL requests to prevent cache poisoning
-            // This must happen before any caching decisions are made
-            add_action('send_headers', array($this, 'ensure_vary_headers'), 1);
             
             // Hook into WordPress early to catch all types of requests (REST, admin-ajax, etc.)
             add_action('init', array($this, 'detect_bot'), 0);
@@ -131,29 +133,37 @@ class Spyglasses {
     }
 
     /**
-     * Load custom blocking and allowing rules with error handling
+     * Load custom blocking and allowing rules from Spyglasses platform
      */
     private function load_custom_rules() {
         try {
-            // Get custom blocks
-            $custom_blocks_option = get_option('spyglasses_custom_blocks', '[]');
-            if (is_array($custom_blocks_option)) {
-                $this->custom_blocks = $custom_blocks_option;
+            // Initialize defaults
+            $this->custom_blocks = array();
+            $this->custom_allows = array();
+            $this->block_ai_model_trainers = false;
+            
+            // Load from cached property settings if available
+            if (isset($this->property_settings)) {
+                $this->block_ai_model_trainers = !empty($this->property_settings['blockAiModelTrainers']);
+                $this->custom_blocks = is_array($this->property_settings['customBlocks']) ? $this->property_settings['customBlocks'] : array();
+                $this->custom_allows = is_array($this->property_settings['customAllows']) ? $this->property_settings['customAllows'] : array();
+                
+                $this->debug_log('Central management rules loaded - AI Model Trainers: ' . ($this->block_ai_model_trainers ? 'BLOCK' : 'ALLOW') . ', Blocks: ' . count($this->custom_blocks) . ', Allows: ' . count($this->custom_allows));
             } else {
-                $decoded = json_decode($custom_blocks_option, true);
-                $this->custom_blocks = is_array($decoded) ? $decoded : array();
+                // Try to load from cached patterns data
+                $cached_patterns = get_transient('spyglasses_agent_patterns');
+                if ($cached_patterns && isset($cached_patterns['propertySettings'])) {
+                    $this->property_settings = $cached_patterns['propertySettings'];
+                    $this->block_ai_model_trainers = !empty($this->property_settings['blockAiModelTrainers']);
+                    $this->custom_blocks = is_array($this->property_settings['customBlocks']) ? $this->property_settings['customBlocks'] : array();
+                    $this->custom_allows = is_array($this->property_settings['customAllows']) ? $this->property_settings['customAllows'] : array();
+                    
+                    $this->debug_log('Central management rules loaded from cache - AI Model Trainers: ' . ($this->block_ai_model_trainers ? 'BLOCK' : 'ALLOW') . ', Blocks: ' . count($this->custom_blocks) . ', Allows: ' . count($this->custom_allows));
+                } else {
+                    $this->debug_log('No central management settings available - using defaults (all allowed)');
+                }
             }
             
-            // Get custom allows
-            $custom_allows_option = get_option('spyglasses_custom_allows', '[]');
-            if (is_array($custom_allows_option)) {
-                $this->custom_allows = $custom_allows_option;
-            } else {
-                $decoded = json_decode($custom_allows_option, true);
-                $this->custom_allows = is_array($decoded) ? $decoded : array();
-            }
-            
-            $this->debug_log('Custom rules loaded - Blocks: ' . count($this->custom_blocks) . ', Allows: ' . count($this->custom_allows));
             if (!empty($this->custom_blocks)) {
                 $this->debug_log('Block rules: ' . implode(', ', array_slice($this->custom_blocks, 0, 5)) . (count($this->custom_blocks) > 5 ? '...' : ''));
             }
@@ -164,6 +174,7 @@ class Spyglasses {
             $this->debug_log('ERROR loading custom rules: ' . $e->getMessage());
             $this->custom_blocks = array();
             $this->custom_allows = array();
+            $this->block_ai_model_trainers = false;
         }
     }
 
@@ -205,6 +216,13 @@ class Spyglasses {
             if ($cached_patterns && isset($cached_patterns['patterns']) && !empty($cached_patterns['patterns'])) {
                 $this->agent_patterns = $cached_patterns;
                 $this->ai_referrers = isset($cached_patterns['aiReferrers']) ? $cached_patterns['aiReferrers'] : array();
+                
+                // Load property settings from cache
+                if (isset($cached_patterns['propertySettings'])) {
+                    $this->property_settings = $cached_patterns['propertySettings'];
+                    $this->debug_log('Property settings loaded from cache');
+                }
+                
                 $this->debug_log('Loaded ' . count($cached_patterns['patterns']) . ' patterns from cache');
                 return;
             } else if ($cached_patterns && empty($cached_patterns['patterns'])) {
@@ -304,6 +322,12 @@ class Spyglasses {
             $this->agent_patterns = $patterns;
             $this->ai_referrers = isset($patterns['aiReferrers']) ? $patterns['aiReferrers'] : array();
             
+            // Load property settings from API response
+            if (isset($patterns['propertySettings'])) {
+                $this->property_settings = $patterns['propertySettings'];
+                $this->debug_log('Property settings loaded from API - AI Model Trainers: ' . (!empty($this->property_settings['blockAiModelTrainers']) ? 'BLOCK' : 'ALLOW'));
+            }
+            
             // Only cache when we have actual patterns to prevent poisoning the cache
             set_transient('spyglasses_agent_patterns', $patterns, DAY_IN_SECONDS);
         
@@ -337,18 +361,7 @@ class Spyglasses {
                 return;
             }
 
-            // Skip WordPress admin pages, AJAX requests, and cron requests to reduce noise
-            if (is_admin() && !wp_doing_ajax()) {
-                $this->debug_log('Skipping detection - admin page');
-                return;
-            }
-            
-            if (wp_doing_ajax()) {
-                $this->debug_log('Skipping detection - AJAX request');
-                return;
-            }
-            
-            // Skip WordPress cron requests (simple URL check as backup)
+            // Skip WordPress cron requests (simple URL check)
             $request_uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
             if (strpos($request_uri, 'wp-cron.php') !== false) {
                 $this->debug_log('Skipping detection - WordPress cron request');
@@ -444,6 +457,8 @@ class Spyglasses {
                     // Never returns
                 } else {
                     $this->debug_log('Bot allowed - not blocking');
+                    // Set cache headers to vary by User-Agent for allowed bots
+                    $this->spyglasses_set_vary_headers();
                 }
             }
             
@@ -455,10 +470,13 @@ class Spyglasses {
                 } catch (Exception $e) {
                     $this->debug_log('ERROR logging AI referrer visit: ' . $e->getMessage());
                 }
+                // Set cache headers to vary by User-Agent for AI referrer traffic
+                $this->spyglasses_set_vary_headers();
             }
             
             if (!$is_bot && !$is_ai_referrer) {
                 $this->debug_log('No bot or AI referrer detected - normal visitor');
+                // For normal visitors, we can allow normal caching
             }
         } catch (Exception $e) {
             $this->debug_log('FATAL ERROR in detect_bot(): ' . $e->getMessage());
@@ -749,171 +767,37 @@ class Spyglasses {
     }
 
     /**
-     * Set headers to vary cache by User-Agent (LEGACY - now handled by ensure_vary_headers)
-     * 
-     * @deprecated This method is kept for backwards compatibility but is no longer actively used.
-     *             Vary headers are now set early for all requests via ensure_vary_headers().
+     * Set headers to vary cache by User-Agent
      */
     private function spyglasses_set_vary_headers() {
-        // This functionality has been moved to ensure_vary_headers() which runs earlier
-        // in the request lifecycle to prevent cache poisoning issues.
-        $this->debug_log('DEPRECATED: spyglasses_set_vary_headers called - headers should already be set by ensure_vary_headers');
-    }
-
-    /**
-     * Ensure Vary headers are set early for all requests
-     */
-    public function ensure_vary_headers() {
-        // Skip if no API key - no point in varying cache if we can't detect bots
-        if (empty($this->api_key)) {
-            return;
-        }
-        
-        // Get user agent for analysis
-        $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '';
-        
-        // Skip admin pages and AJAX requests - no need to vary cache for these
-        if ((is_admin() && !wp_doing_ajax()) || wp_doing_ajax()) {
-            return;
-        }
-        
-        // Only set Vary headers if there's a potential bot risk
-        if ($this->should_vary_cache($user_agent)) {
-            $this->debug_log('Setting Vary headers - potential bot traffic detected');
+        // LiteSpeed Cache specific: force cache variation by User-Agent hash
+        if (function_exists('add_filter') && isset($_SERVER['HTTP_USER_AGENT'])) {
+            add_filter('litespeed_vary', function($list) {
+                $list['ua'] = substr(md5($_SERVER['HTTP_USER_AGENT']), 0, 8);
+                return $list;
+            });
             
-            // LiteSpeed Cache specific: force cache variation by User-Agent hash
-            if (function_exists('add_filter') && !empty($user_agent)) {
-                add_filter('litespeed_vary', function($list) use ($user_agent) {
-                    $list['ua'] = substr(md5($user_agent), 0, 8);
-                    return $list;
-                });
-                
-                // Also force vary for AJAX-triggered cache variations
-                if (function_exists('do_action')) {
-                    do_action('litespeed_vary_ajax_force');
+            // Also force vary for AJAX-triggered cache variations
+            if (function_exists('do_action')) {
+                do_action('litespeed_vary_ajax_force');
+            }
+        }
+        
+        // Fallback for other cache plugins: standard Vary header
+        if (!headers_sent()) {
+            $existing_vary = '';
+            foreach (headers_list() as $header) {
+                if (stripos($header, 'Vary:') === 0) {
+                    $existing_vary = trim(substr($header, 5));
+                    break;
                 }
             }
             
-            // For other cache plugins: use normalized User-Agent grouping instead of full UA
-            $this->set_normalized_vary_header($user_agent);
-        } else {
-            $this->debug_log('Skipping Vary headers - normal human browser detected');
-        }
-    }
-    
-    /**
-     * Check if we should vary cache based on User-Agent analysis
-     * 
-     * @param string $user_agent The user agent string
-     * @return bool Whether to set Vary headers
-     */
-    private function should_vary_cache($user_agent) {
-        if (empty($user_agent)) {
-            return false;
-        }
-        
-        // Quick check: if this looks like a known bot pattern, definitely vary
-        if (isset($this->agent_patterns['patterns']) && is_array($this->agent_patterns['patterns'])) {
-            foreach ($this->agent_patterns['patterns'] as $pattern_data) {
-                if (isset($pattern_data['pattern'])) {
-                    try {
-                        $escaped_pattern = preg_quote($pattern_data['pattern'], '/');
-                        if (preg_match('/' . $escaped_pattern . '/i', $user_agent)) {
-                            return true; // Definitely a bot - vary cache
-                        }
-                    } catch (Exception $e) {
-                        // Continue checking other patterns
-                    }
-                }
+            if ($existing_vary && stripos($existing_vary, 'User-Agent') === false) {
+                header('Vary: ' . $existing_vary . ', User-Agent');
+            } else if (!$existing_vary) {
+                header('Vary: User-Agent');
             }
         }
-        
-        // Check for suspicious bot-like characteristics
-        $bot_indicators = array(
-            'bot', 'crawler', 'spider', 'scraper', 'indexer',
-            'GPT', 'Claude', 'Perplexity', 'Gemini', 'AI',
-            'curl', 'wget', 'python', 'requests', 'http',
-            'headless', 'phantom', 'selenium'
-        );
-        
-        $ua_lower = strtolower($user_agent);
-        foreach ($bot_indicators as $indicator) {
-            if (strpos($ua_lower, strtolower($indicator)) !== false) {
-                return true; // Potential bot - vary cache
-            }
-        }
-        
-        // Check for missing or minimal user agents (often bots)
-        if (strlen($user_agent) < 20) {
-            return true; // Too short - likely a bot
-        }
-        
-        // If it looks like a normal browser, don't vary cache
-        $normal_browsers = array('Mozilla', 'Chrome', 'Safari', 'Firefox', 'Edge', 'Opera');
-        foreach ($normal_browsers as $browser) {
-            if (strpos($user_agent, $browser) !== false) {
-                return false; // Normal browser - don't vary cache
-            }
-        }
-        
-        // Unknown user agent - err on the side of caution and vary
-        return true;
-    }
-    
-    /**
-     * Set normalized Vary header for better cache efficiency
-     * 
-     * @param string $user_agent The user agent string
-     */
-    private function set_normalized_vary_header($user_agent) {
-        if (headers_sent()) {
-            return;
-        }
-        
-        // Create a normalized cache key based on browser family rather than exact version
-        $cache_key = $this->normalize_user_agent_for_cache($user_agent);
-        
-        // Set a custom header that cache plugins can use
-        header('X-Spyglasses-UA-Group: ' . $cache_key);
-        
-        // Still set the standard Vary header but with our normalized approach
-        $existing_vary = '';
-        foreach (headers_list() as $header) {
-            if (stripos($header, 'Vary:') === 0) {
-                $existing_vary = trim(substr($header, 5));
-                break;
-            }
-        }
-        
-        if ($existing_vary && stripos($existing_vary, 'User-Agent') === false) {
-            header('Vary: ' . $existing_vary . ', User-Agent');
-        } else if (!$existing_vary) {
-            header('Vary: User-Agent');
-        }
-    }
-    
-    /**
-     * Normalize User-Agent for cache grouping
-     * 
-     * @param string $user_agent The user agent string
-     * @return string Normalized cache key
-     */
-    private function normalize_user_agent_for_cache($user_agent) {
-        // Extract major browser and version info, ignoring minor versions
-        if (preg_match('/Chrome\/(\d+)/', $user_agent, $matches)) {
-            return 'chrome-' . $matches[1];
-        }
-        if (preg_match('/Firefox\/(\d+)/', $user_agent, $matches)) {
-            return 'firefox-' . $matches[1];
-        }
-        if (preg_match('/Safari\/(\d+).*Version\/(\d+)/', $user_agent, $matches)) {
-            return 'safari-' . $matches[2];
-        }
-        if (preg_match('/Edge\/(\d+)/', $user_agent, $matches)) {
-            return 'edge-' . $matches[1];
-        }
-        
-        // For bots or unknown agents, use a hash to group similar ones
-        return 'other-' . substr(md5($user_agent), 0, 6);
     }
 } 

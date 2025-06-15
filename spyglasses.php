@@ -3,15 +3,15 @@
  * Plugin Name: Spyglasses
  * Plugin URI: https://www.spyglasses.io
  * Description: Advanced bot and AI agent detection for WordPress websites.
- * Version: 1.0.1
+ * Version: 0.3.2
  * Author: Orchestra AI, Inc.
  * Author URI: https://www.spyglasses.io
  * License: MIT
  * License URI: https://opensource.org/licenses/MIT
  * Text Domain: spyglasses
  * Requires at least: 5.0
- * Tested up to: 6.8.1
- * Requires PHP: 7.2
+ * Tested up to: 6.4
+ * Requires PHP: 7.4
  * Network: false
  */
 
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('SPYGLASSES_VERSION', '1.0.1');
+define('SPYGLASSES_VERSION', '0.3.2');
 define('SPYGLASSES_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SPYGLASSES_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('SPYGLASSES_COLLECTOR_ENDPOINT', 'https://www.spyglasses.io/api/collect');
@@ -55,11 +55,6 @@ function spyglasses_activate() {
     add_option('spyglasses_api_key', '');
     add_option('spyglasses_debug_mode', 'no');
     add_option('spyglasses_auto_sync_patterns', 'yes');
-    add_option('spyglasses_block_ai_model_trainers', 'no');
-    
-    // Make sure these are always stored as JSON strings
-    add_option('spyglasses_custom_blocks', '[]');
-    add_option('spyglasses_custom_allows', '[]');
     
     // Schedule the pattern update event
     if (!wp_next_scheduled('spyglasses_update_patterns')) {
@@ -98,9 +93,6 @@ function spyglasses_uninstall() {
     delete_option('spyglasses_api_key');
     delete_option('spyglasses_debug_mode');
     delete_option('spyglasses_auto_sync_patterns');
-    delete_option('spyglasses_block_ai_model_trainers');
-    delete_option('spyglasses_custom_blocks');
-    delete_option('spyglasses_custom_allows');
     delete_option('spyglasses_last_pattern_sync');
     
     // Remove transient cache
