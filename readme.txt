@@ -1,12 +1,12 @@
 === Spyglasses ===
-Contributors: orchestraai
+Contributors: spyglasses
 Tags: bot detection, ai agents, security, analytics, crawlers
 Requires at least: 5.0
 Tested up to: 6.8
 Requires PHP: 7.2
-Stable tag: 1.1.2
-License: MIT
-License URI: https://opensource.org/licenses/MIT
+Stable tag: 1.1.4
+License: GPLv2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 AI agent and bot detection for WordPress. Detect and monitor traffic from AI assistants like ChatGPT, Claude, Perplexity. Block AI model trainers.
 
