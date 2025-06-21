@@ -617,7 +617,8 @@ class Spyglasses {
                 'response_status' => $status_code,
                 'response_time_ms' => $response_time,
                 'headers' => $this->get_headers(),
-                'timestamp' => gmdate('Y-m-d\TH:i:s\Z')
+                'timestamp' => gmdate('Y-m-d\TH:i:s\Z'),
+                'platformType' => 'wordpress'
             );
             
             // Add metadata for blocking information (new functionality)

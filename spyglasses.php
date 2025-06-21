@@ -3,7 +3,7 @@
  * Plugin Name: Spyglasses
  * Plugin URI: https://www.spyglasses.io
  * Description: Detect, block and log your website's AI traffic.
- * Version: 1.1.4
+ * Version: 1.1.5
  * Author: Orchestra AI, Inc.
  * Author URI: https://www.spyglasses.io
  * License: GPLv2 or later
@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('SPYGLASSES_VERSION', '1.1.4');
+define('SPYGLASSES_VERSION', '1.1.5');
 define('SPYGLASSES_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SPYGLASSES_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('SPYGLASSES_COLLECTOR_ENDPOINT', 'https://www.spyglasses.io/api/collect');
