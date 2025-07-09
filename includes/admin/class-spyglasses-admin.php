@@ -363,7 +363,7 @@ class Spyglasses_Admin {
                     <?php
                     $logo_path = SPYGLASSES_PLUGIN_DIR . 'assets/images/spyglasses-logo.webp';
                     if (file_exists($logo_path) && is_readable($logo_path)) {
-                        echo '<img src="' . esc_url(SPYGLASSES_PLUGIN_URL . 'assets/images/spyglasses-logo.webp') . '" alt="Spyglasses Logo" style="max-width: 200px; height: auto;" />';
+                        $this->render_plugin_logo();
                     } else {
                         echo '<h1>' . esc_html__('Spyglasses', 'spyglasses') . '</h1>';
                     }
@@ -666,7 +666,7 @@ class Spyglasses_Admin {
             echo '<div class="spyglasses-referrer-card">';
             
             if (!empty($referrer['logoUrl'])) {
-                echo '<img src="' . esc_url($referrer['logoUrl']) . '" alt="' . esc_attr($referrer['name']) . '" class="spyglasses-referrer-logo" onload="this.style.opacity=1" onerror="this.style.display=\'none\'" style="opacity:0.7" />';
+                $this->render_referrer_logo($referrer['logoUrl'], $referrer['name']);
             }
             
             echo '<div class="spyglasses-referrer-name">' . esc_html($referrer['name']) . '</div>';
@@ -750,5 +750,109 @@ class Spyglasses_Admin {
             }
         </style>
         <?php
+    }
+
+    /**
+     * Render plugin logo
+     */
+    private function render_plugin_logo() {
+        $logo_url = SPYGLASSES_PLUGIN_URL . 'assets/images/spyglasses-logo.webp';
+        $logo_attributes = array(
+            'src' => esc_url($logo_url),
+            'alt' => esc_attr__('Spyglasses Logo', 'spyglasses'),
+            'style' => 'max-width: 200px; height: auto;'
+        );
+        
+        // Build image tag with proper attribute escaping
+        $img_tag = '<img';
+        foreach ($logo_attributes as $attr => $value) {
+            $img_tag .= ' ' . sanitize_key($attr) . '="' . $value . '"';
+        }
+        $img_tag .= ' />';
+        
+        // Allow filtering of the logo output
+        $img_tag = apply_filters('spyglasses_admin_logo', $img_tag, $logo_attributes);
+        
+        // Use wp_kses to safely output the HTML image tag
+        $allowed_html = array(
+            'img' => array(
+                'src' => true,
+                'alt' => true,
+                'style' => true,
+                'class' => true,
+                'width' => true,
+                'height' => true
+            )
+        );
+        echo wp_kses($img_tag, $allowed_html);
+    }
+
+    /**
+     * Render referrer logo
+     */
+    private function render_referrer_logo($logo_url, $referrer_name) {
+        // Validate the URL is from a trusted source
+        $allowed_domains = array(
+            'spyglasses.io',
+            'openai.com',
+            'anthropic.com',
+            'perplexity.ai',
+            'google.com',
+            'microsoft.com',
+            'meta.com'
+        );
+        
+        $parsed_url = wp_parse_url($logo_url);
+        $domain = isset($parsed_url['host']) ? $parsed_url['host'] : '';
+        
+        // Remove www. prefix for comparison
+        $domain = preg_replace('/^www\./', '', $domain);
+        
+        $is_trusted = false;
+        foreach ($allowed_domains as $allowed_domain) {
+            if ($domain === $allowed_domain || substr($domain, -strlen('.' . $allowed_domain)) === '.' . $allowed_domain) {
+                $is_trusted = true;
+                break;
+            }
+        }
+        
+        if (!$is_trusted) {
+            // Don't render untrusted external images
+            return;
+        }
+        
+        $logo_attributes = array(
+            'src' => esc_url($logo_url),
+            'alt' => esc_attr($referrer_name),
+            'class' => 'spyglasses-referrer-logo',
+            'style' => 'opacity:0.7',
+            'onload' => 'this.style.opacity=1',
+            'onerror' => 'this.style.display=\'none\''
+        );
+        
+        // Build image tag with proper attribute escaping
+        $img_tag = '<img';
+        foreach ($logo_attributes as $attr => $value) {
+            $img_tag .= ' ' . sanitize_key($attr) . '="' . esc_attr($value) . '"';
+        }
+        $img_tag .= ' />';
+        
+        // Allow filtering of the referrer logo output
+        $img_tag = apply_filters('spyglasses_referrer_logo', $img_tag, $logo_attributes, $referrer_name);
+        
+        // Use wp_kses to safely output the HTML image tag
+        $allowed_html = array(
+            'img' => array(
+                'src' => true,
+                'alt' => true,
+                'style' => true,
+                'class' => true,
+                'width' => true,
+                'height' => true,
+                'onload' => true,
+                'onerror' => true
+            )
+        );
+        echo wp_kses($img_tag, $allowed_html);
     }
 } 

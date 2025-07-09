@@ -4,7 +4,7 @@ Tags: bot detection, ai agents, security, analytics, crawlers
 Requires at least: 5.0
 Tested up to: 6.8
 Requires PHP: 7.2
-Stable tag: 1.1.5
+Stable tag: 1.1.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -117,6 +117,11 @@ Remember to disable debug logging when you have fixed the issue, as excessive lo
 5. AI referrer tracking
 
 == Changelog ==
+
+= 1.1.6 =
+* Enhanced code compliance with WordPress.org best practices and coding standards
+* Improved security with better output escaping and filesystem operations
+* Updated image rendering to use WordPress-compliant methods
 
 = 1.1.5 =
 * Plugin now reports type WordPress when sending collector events

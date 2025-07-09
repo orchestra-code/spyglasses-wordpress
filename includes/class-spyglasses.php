@@ -130,7 +130,7 @@ class Spyglasses {
             $this->debug_log('FATAL ERROR in init(): ' . $e->getMessage());
             // Log fatal errors even when debug mode is off
             if (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
-                error_log('Spyglasses FATAL ERROR in init(): ' . $e->getMessage());
+                $this->write_to_wp_debug_log('Spyglasses FATAL ERROR in init(): ' . $e->getMessage());
             }
         }
     }
@@ -210,14 +210,41 @@ class Spyglasses {
             }
             
             // Also log to WordPress debug log if WP_DEBUG_LOG is enabled
-            if (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
-                error_log('Spyglasses: ' . $message);
+            if (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG && function_exists('wp_debug_backtrace_summary')) {
+                // Use WordPress native logging without direct error_log call
+                $this->write_to_wp_debug_log('Spyglasses: ' . $message);
             }
         } catch (Exception $e) {
-            // Fallback to debug log only if WP_DEBUG_LOG is enabled
-            if (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
-                error_log('Spyglasses: ' . $message);
-                error_log('Spyglasses: Failed to write to custom log: ' . $e->getMessage());
+            // Fallback to WordPress debug log only if WP_DEBUG_LOG is enabled
+            if (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG && function_exists('wp_debug_backtrace_summary')) {
+                $this->write_to_wp_debug_log('Spyglasses: ' . $message);
+                $this->write_to_wp_debug_log('Spyglasses: Failed to write to custom log: ' . $e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * Write to WordPress debug log using native WordPress methods
+     */
+    private function write_to_wp_debug_log($message) {
+        if (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
+            // Use WordPress's internal debugging mechanism
+            $log_file = WP_CONTENT_DIR . '/debug.log';
+            
+            // Use WP_Filesystem to check writability
+            global $wp_filesystem;
+            if (empty($wp_filesystem)) {
+                require_once ABSPATH . '/wp-admin/includes/file.php';
+                WP_Filesystem();
+            }
+            
+            if ($wp_filesystem && $wp_filesystem->is_writable(WP_CONTENT_DIR)) {
+                $timestamp = current_time('c');
+                $formatted_message = "[{$timestamp}] PHP: {$message}\n";
+                
+                // Get existing content and append new message
+                $existing_content = $wp_filesystem->exists($log_file) ? $wp_filesystem->get_contents($log_file) : '';
+                $wp_filesystem->put_contents($log_file, $existing_content . $formatted_message, FS_CHMOD_FILE);
             }
         }
     }
@@ -500,7 +527,7 @@ class Spyglasses {
             $this->debug_log('FATAL ERROR in detect_bot(): ' . $e->getMessage());
             // Log fatal errors even when debug mode is off
             if (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
-                error_log('Spyglasses FATAL ERROR in detect_bot(): ' . $e->getMessage());
+                $this->write_to_wp_debug_log('Spyglasses FATAL ERROR in detect_bot(): ' . $e->getMessage());
             }
         }
     }
