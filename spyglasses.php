@@ -5,7 +5,6 @@
  * Description: Detect, block and log your website's AI traffic.
  * Version: 1.1.6
  * Author: Orchestra AI, Inc.
- * Author URI: https://www.spyglasses.io
  * License: GPLv2 or later
  * License URI: http://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: spyglasses
