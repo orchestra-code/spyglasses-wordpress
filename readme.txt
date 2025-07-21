@@ -1,14 +1,14 @@
 === Spyglasses ===
 Contributors: spyglasses
-Tags: bot detection, ai agents, security, analytics, crawlers
+Tags: ai analytics, ai seo, ai visits, ai agents, analytics
 Requires at least: 5.0
 Tested up to: 6.8
 Requires PHP: 7.2
-Stable tag: 1.1.6
+Stable tag: 1.1.7
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-AI agent and bot detection for WordPress. Detect and monitor traffic from AI assistants like ChatGPT, Claude, Perplexity. Block AI model trainers.
+AI traffic detection and analytics for WordPress. Detect and monitor traffic from AI assistants like ChatGPT, Claude, Perplexity. Block AI model trainers.
 
 == Description ==
 
@@ -117,6 +117,9 @@ Remember to disable debug logging when you have fixed the issue, as excessive lo
 5. AI referrer tracking
 
 == Changelog ==
+
+= 1.1.7 =
+* Revised slug to better describe the plugin
 
 = 1.1.6 =
 * Enhanced code compliance with WordPress.org best practices and coding standards
