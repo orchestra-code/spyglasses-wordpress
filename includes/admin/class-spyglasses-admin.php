@@ -47,8 +47,8 @@ class Spyglasses_Admin {
         $menu_icon = !empty($icon_svg) ? $icon_svg : 'dashicons-visibility';
         
         add_menu_page(
-            esc_html__('Spyglasses', 'spyglasses'),
-            esc_html__('Spyglasses', 'spyglasses'),
+            esc_html__('Spyglasses', 'spyglasses-ai-traffic-analytics'),
+            esc_html__('Spyglasses', 'spyglasses-ai-traffic-analytics'),
             'manage_options',
             'spyglasses',
             array($this, 'render_settings_page'),
@@ -76,64 +76,64 @@ class Spyglasses_Admin {
         
         add_settings_section(
             'spyglasses_main_section',
-            esc_html__('Main Settings', 'spyglasses'),
+            esc_html__('Main Settings', 'spyglasses-ai-traffic-analytics'),
             array($this, 'render_main_section'),
-            'spyglasses'
+            'spyglasses-ai-traffic-analytics'
         );
         
         add_settings_field(
             'spyglasses_api_key',
-            esc_html__('API Key', 'spyglasses'),
+            esc_html__('API Key', 'spyglasses-ai-traffic-analytics'),
             array($this, 'render_api_key_field'),
-            'spyglasses',
+            'spyglasses-ai-traffic-analytics',
             'spyglasses_main_section'
         );
         
         add_settings_field(
             'spyglasses_auto_sync_patterns',
-            esc_html__('Auto-Sync Patterns', 'spyglasses'),
+            esc_html__('Auto-Sync Patterns', 'spyglasses-ai-traffic-analytics'),
             array($this, 'render_auto_sync_field'),
-            'spyglasses',
+            'spyglasses-ai-traffic-analytics',
             'spyglasses_main_section'
         );
         
         add_settings_field(
             'spyglasses_manual_sync',
-            esc_html__('Manual Sync', 'spyglasses'),
+            esc_html__('Manual Sync', 'spyglasses-ai-traffic-analytics'),
             array($this, 'render_manual_sync_button'),
-            'spyglasses',
+            'spyglasses-ai-traffic-analytics',
             'spyglasses_main_section'
         );
         
         add_settings_field(
             'spyglasses_debug_mode',
-            esc_html__('Debug Mode', 'spyglasses'),
+            esc_html__('Debug Mode', 'spyglasses-ai-traffic-analytics'),
             array($this, 'render_debug_mode_field'),
-            'spyglasses',
+            'spyglasses-ai-traffic-analytics',
             'spyglasses_main_section'
         );
         
         // Add Central Management Section
         add_settings_section(
             'spyglasses_central_section',
-            esc_html__('Central Management', 'spyglasses'),
+            esc_html__('Central Management', 'spyglasses-ai-traffic-analytics'),
             array($this, 'render_central_section'),
-            'spyglasses'
+            'spyglasses-ai-traffic-analytics'
         );
         
         add_settings_field(
             'spyglasses_central_blocking',
-            esc_html__('Bot Blocking Settings', 'spyglasses'),
+            esc_html__('Bot Blocking Settings', 'spyglasses-ai-traffic-analytics'),
             array($this, 'render_central_blocking_field'),
-            'spyglasses',
+            'spyglasses-ai-traffic-analytics',
             'spyglasses_central_section'
         );
         
         add_settings_field(
             'spyglasses_central_referrers',
-            esc_html__('AI Referrer Tracking', 'spyglasses'),
+            esc_html__('AI Referrer Tracking', 'spyglasses-ai-traffic-analytics'),
             array($this, 'render_central_referrers_field'),
-            'spyglasses',
+            'spyglasses-ai-traffic-analytics',
             'spyglasses_central_section'
         );
     }
@@ -181,7 +181,7 @@ class Spyglasses_Admin {
         echo '<p>';
         echo sprintf(
             /* translators: %s: Link to Spyglasses website */
-            esc_html__('Spyglasses helps you detect and monitor AI agents and bots that visit your site. Sign up for an account at %s to get your API key.', 'spyglasses'),
+            esc_html__('Spyglasses helps you detect and monitor AI agents and bots that visit your site. Sign up for an account at %s to get your API key.', 'spyglasses-ai-traffic-analytics'),
             '<a href="https://www.spyglasses.io?ref=wp-plugin" target="_blank">spyglasses.io</a>'
         );
         echo '</p>';
@@ -195,14 +195,14 @@ class Spyglasses_Admin {
         
         echo '<input type="text" id="spyglasses_api_key" name="spyglasses_api_key" value="' . esc_attr($api_key) . '" class="regular-text" />';
         echo '<p class="description">';
-        echo esc_html__('Enter your Spyglasses API key. You can find this in your Spyglasses dashboard.', 'spyglasses');
+        echo esc_html__('Enter your Spyglasses API key. You can find this in your Spyglasses dashboard.', 'spyglasses-ai-traffic-analytics');
         echo '</p>';
         
         if (empty($api_key)) {
             echo '<p class="description" style="color: #d63638;">';
             echo sprintf(
                 /* translators: %s: Link to Spyglasses website */
-                esc_html__('No API key set. Please sign up at %s to get your API key.', 'spyglasses'),
+                esc_html__('No API key set. Please sign up at %s to get your API key.', 'spyglasses-ai-traffic-analytics'),
                 '<a href="https://www.spyglasses.io?ref=wp-plugin" target="_blank">spyglasses.io</a>'
             );
             echo '</p>';
@@ -217,10 +217,10 @@ class Spyglasses_Admin {
         
         echo '<label>';
         echo '<input type="checkbox" id="spyglasses_auto_sync_patterns" name="spyglasses_auto_sync_patterns" value="yes" ' . checked('yes', $auto_sync, false) . ' />';
-        echo esc_html__('Automatically sync agent patterns daily (recommended)', 'spyglasses');
+        echo esc_html__('Automatically sync agent patterns daily (recommended)', 'spyglasses-ai-traffic-analytics');
         echo '</label>';
         echo '<p class="description">';
-        echo esc_html__('Keeps the agent patterns updated from the Spyglasses API. Disable if you want to manage patterns manually.', 'spyglasses');
+        echo esc_html__('Keeps the agent patterns updated from the Spyglasses API. Disable if you want to manage patterns manually.', 'spyglasses-ai-traffic-analytics');
         echo '</p>';
     }
     
@@ -234,22 +234,22 @@ class Spyglasses_Admin {
         echo '<form method="post">';
         wp_nonce_field('spyglasses_manual_sync', 'spyglasses_sync_nonce');
         echo '<input type="hidden" name="spyglasses_manual_sync" value="1" />';
-        echo '<input type="submit" class="button" value="' . esc_attr__('Sync Patterns Now', 'spyglasses') . '" />';
+        echo '<input type="submit" class="button" value="' . esc_attr__('Sync Patterns Now', 'spyglasses-ai-traffic-analytics') . '" />';
         echo '</form>';
         
         if ($last_sync > 0) {
             echo '<p class="description">';
             echo sprintf(
                 /* translators: %1$s: Time since last sync, %2$d: Total number of patterns */
-                esc_html__('Last synced: %1$s. Total patterns: %2$d.', 'spyglasses'),
-                esc_html(human_time_diff($last_sync, time()) . ' ' . esc_html__('ago', 'spyglasses')),
+                esc_html__('Last synced: %1$s. Total patterns: %2$d.', 'spyglasses-ai-traffic-analytics'),
+                esc_html(human_time_diff($last_sync, time()) . ' ' . esc_html__('ago', 'spyglasses-ai-traffic-analytics')),
                 esc_html($pattern_stats['total'])
             );
             echo '</p>';
             
             if (!empty($pattern_stats['categories'])) {
                 echo '<div class="pattern-stats">';
-                echo '<h4>' . esc_html__('Agent Categories', 'spyglasses') . '</h4>';
+                echo '<h4>' . esc_html__('Agent Categories', 'spyglasses-ai-traffic-analytics') . '</h4>';
                 echo '<ul>';
                 foreach ($pattern_stats['categories'] as $category => $count) {
                     echo '<li><strong>' . esc_html($category) . ':</strong> ' . esc_html($count) . '</li>';
@@ -268,10 +268,10 @@ class Spyglasses_Admin {
         
         echo '<label>';
         echo '<input type="checkbox" id="spyglasses_debug_mode" name="spyglasses_debug_mode" value="yes" ' . checked('yes', $debug_mode, false) . ' />';
-        echo esc_html__('Enable debug mode (logs errors to WordPress error log)', 'spyglasses');
+        echo esc_html__('Enable debug mode (logs errors to WordPress error log)', 'spyglasses-ai-traffic-analytics');
         echo '</label>';
         echo '<p class="description">';
-        echo esc_html__('If you encounter issues, enable debug mode and check <code>wp-content/debug.log</code> for details. Make sure <code>WP_DEBUG</code> and <code>WP_DEBUG_LOG</code> are enabled in <code>wp-config.php</code>.', 'spyglasses');
+        echo esc_html__('If you encounter issues, enable debug mode and check <code>wp-content/debug.log</code> for details. Make sure <code>WP_DEBUG</code> and <code>WP_DEBUG_LOG</code> are enabled in <code>wp-config.php</code>.', 'spyglasses-ai-traffic-analytics');
         echo '</p>';
     }
     
@@ -320,13 +320,13 @@ class Spyglasses_Admin {
         $sync_nonce = sanitize_text_field(wp_unslash($_POST['spyglasses_sync_nonce']));
         
         if (!wp_verify_nonce($sync_nonce, 'spyglasses_manual_sync')) {
-            add_settings_error('spyglasses', 'sync-error', esc_html__('Security check failed.', 'spyglasses'), 'error');
+            add_settings_error('spyglasses-ai-traffic-analytics', 'sync-error', esc_html__('Security check failed.', 'spyglasses-ai-traffic-analytics'), 'error');
             return;
         }
         
         $api_key = get_option('spyglasses_api_key', '');
         if (empty($api_key)) {
-            add_settings_error('spyglasses', 'sync-error', esc_html__('API key is required for syncing patterns.', 'spyglasses'), 'error');
+            add_settings_error('spyglasses-ai-traffic-analytics', 'sync-error', esc_html__('API key is required for syncing patterns.', 'spyglasses-ai-traffic-analytics'), 'error');
             return;
         }
         
@@ -336,13 +336,13 @@ class Spyglasses_Admin {
         
         if ($result === true) {
             update_option('spyglasses_last_pattern_sync', time());
-            add_settings_error('spyglasses', 'sync-success', esc_html__('Agent patterns synced successfully.', 'spyglasses'), 'success');
+            add_settings_error('spyglasses-ai-traffic-analytics', 'sync-success', esc_html__('Agent patterns synced successfully.', 'spyglasses-ai-traffic-analytics'), 'success');
         } else {
-            $error_message = esc_html__('Failed to sync agent patterns. Please check your API key and try again.', 'spyglasses');
+            $error_message = esc_html__('Failed to sync agent patterns. Please check your API key and try again.', 'spyglasses-ai-traffic-analytics');
             if (!empty($result) && is_string($result)) {
                 $error_message .= ' Debug: ' . esc_html($result);
             }
-            add_settings_error('spyglasses', 'sync-error', $error_message, 'error');
+            add_settings_error('spyglasses-ai-traffic-analytics', 'sync-error', $error_message, 'error');
         }
     }
 
@@ -365,46 +365,46 @@ class Spyglasses_Admin {
                     if (file_exists($logo_path) && is_readable($logo_path)) {
                         $this->render_plugin_logo();
                     } else {
-                        echo '<h1>' . esc_html__('Spyglasses', 'spyglasses') . '</h1>';
+                        echo '<h1>' . esc_html__('Spyglasses', 'spyglasses-ai-traffic-analytics') . '</h1>';
                     }
                     ?>
                 </div>
                 <div class="spyglasses-header-actions">
                     <a href="https://www.spyglasses.io/app?ref=wp-plugin" target="_blank" class="button button-secondary">
-                        <?php esc_html_e('Go to Dashboard', 'spyglasses'); ?>
+                        <?php esc_html_e('Go to Dashboard', 'spyglasses-ai-traffic-analytics'); ?>
                     </a>
                     <a href="https://www.spyglasses.io/docs?ref=wp-plugin" target="_blank" class="button button-secondary">
-                        <?php esc_html_e('Documentation', 'spyglasses'); ?>
+                        <?php esc_html_e('Documentation', 'spyglasses-ai-traffic-analytics'); ?>
                     </a>
                 </div>
             </div>
             
-            <?php settings_errors('spyglasses'); ?>
+            <?php settings_errors('spyglasses-ai-traffic-analytics'); ?>
             
             <form action="options.php" method="post">
                 <?php
                 settings_fields('spyglasses_settings');
-                do_settings_sections('spyglasses');
+                do_settings_sections('spyglasses-ai-traffic-analytics');
                 submit_button();
                 ?>
             </form>
             
             <div class="spyglasses-admin-footer">
-                <h2><?php esc_html_e('About Spyglasses', 'spyglasses'); ?></h2>
+                <h2><?php esc_html_e('About Spyglasses', 'spyglasses-ai-traffic-analytics'); ?></h2>
                 <p>
-                    <?php esc_html_e('Spyglasses is a powerful tool that helps you detect and monitor AI agents and bots that visit your site. With Spyglasses, you can:', 'spyglasses'); ?>
+                    <?php esc_html_e('Spyglasses is a powerful tool that helps you detect and monitor AI agents and bots that visit your site. With Spyglasses, you can:', 'spyglasses-ai-traffic-analytics'); ?>
                 </p>
                 <ul class="spyglasses-features">
-                    <li><?php esc_html_e('Detect AI agents and bots in real-time', 'spyglasses'); ?></li>
-                    <li><?php esc_html_e('Monitor bot traffic to your site', 'spyglasses'); ?></li>
-                    <li><?php esc_html_e('Understand how AI agents interact with your content', 'spyglasses'); ?></li>
-                    <li><?php esc_html_e('Protect your content from unwanted scraping', 'spyglasses'); ?></li>
+                    <li><?php esc_html_e('Detect AI agents and bots in real-time', 'spyglasses-ai-traffic-analytics'); ?></li>
+                    <li><?php esc_html_e('Monitor bot traffic to your site', 'spyglasses-ai-traffic-analytics'); ?></li>
+                    <li><?php esc_html_e('Understand how AI agents interact with your content', 'spyglasses-ai-traffic-analytics'); ?></li>
+                    <li><?php esc_html_e('Protect your content from unwanted scraping', 'spyglasses-ai-traffic-analytics'); ?></li>
                 </ul>
                 <p>
                     <?php 
                     echo sprintf(
                         /* translators: %1$s: Opening link tag, %2$s: Closing link tag */
-                        esc_html__('Don\'t have an account yet? %1$sSign up for Spyglasses%2$s to get started.', 'spyglasses'),
+                        esc_html__('Don\'t have an account yet? %1$sSign up for Spyglasses%2$s to get started.', 'spyglasses-ai-traffic-analytics'),
                         '<a href="https://www.spyglasses.io?ref=wp-plugin" target="_blank">', 
                         '</a>'
                     ); 
@@ -480,7 +480,7 @@ class Spyglasses_Admin {
      */
     public function add_settings_link($links) {
         $settings_url = admin_url('admin.php?page=spyglasses');
-        $settings_link = '<a href="' . esc_url($settings_url) . '">' . esc_html__('Settings', 'spyglasses') . '</a>';
+        $settings_link = '<a href="' . esc_url($settings_url) . '">' . esc_html__('Settings', 'spyglasses-ai-traffic-analytics') . '</a>';
         array_unshift($links, $settings_link);
         return $links;
     }
@@ -492,7 +492,7 @@ class Spyglasses_Admin {
         echo '<p>';
         echo sprintf(
             /* translators: %s: Link to Spyglasses dashboard */
-            esc_html__('Bot blocking settings and custom rules are now managed centrally through your Spyglasses dashboard. Visit %s to configure these settings.', 'spyglasses'),
+            esc_html__('Bot blocking settings and custom rules are now managed centrally through your Spyglasses dashboard. Visit %s to configure these settings.', 'spyglasses-ai-traffic-analytics'),
             '<a href="https://www.spyglasses.io/app?ref=wp-plugin" target="_blank">your Spyglasses dashboard</a>'
         );
         echo '</p>';
@@ -507,7 +507,7 @@ class Spyglasses_Admin {
         
         if (!$property_settings) {
             echo '<div class="notice notice-info inline">';
-            echo '<p>' . esc_html__('Central settings not available. Please sync patterns to load your blocking configuration.', 'spyglasses') . '</p>';
+            echo '<p>' . esc_html__('Central settings not available. Please sync patterns to load your blocking configuration.', 'spyglasses-ai-traffic-analytics') . '</p>';
             echo '</div>';
             return;
         }
@@ -516,28 +516,28 @@ class Spyglasses_Admin {
         
         // AI Model Trainers setting
         echo '<div class="spyglasses-setting-row">';
-        echo '<h4>' . esc_html__('AI Model Trainers', 'spyglasses') . '</h4>';
+        echo '<h4>' . esc_html__('AI Model Trainers', 'spyglasses-ai-traffic-analytics') . '</h4>';
         $ai_status = !empty($property_settings['blockAiModelTrainers']) ? 'blocked' : 'allowed';
         $ai_class = $ai_status === 'blocked' ? 'blocked' : 'allowed';
         echo '<span class="spyglasses-status ' . esc_attr($ai_class) . '">' . esc_html(ucfirst($ai_status)) . '</span>';
-        echo '<p class="description">' . esc_html__('AI agents that collect data for training models', 'spyglasses') . '</p>';
+        echo '<p class="description">' . esc_html__('AI agents that collect data for training models', 'spyglasses-ai-traffic-analytics') . '</p>';
         echo '</div>';
         
         // Custom blocking rules
         echo '<div class="spyglasses-setting-row">';
-        echo '<h4>' . esc_html__('Custom Blocking Rules', 'spyglasses') . '</h4>';
+        echo '<h4>' . esc_html__('Custom Blocking Rules', 'spyglasses-ai-traffic-analytics') . '</h4>';
         $block_count = is_array($property_settings['customBlocks']) ? count($property_settings['customBlocks']) : 0;
         /* translators: %d: Number of blocking rules */
-        echo '<span class="spyglasses-count">' . sprintf(esc_html__('%d rules', 'spyglasses'), esc_html($block_count)) . '</span>';
-        echo '<p class="description">' . esc_html__('Specific patterns, categories, or types set to block', 'spyglasses') . '</p>';
+        echo '<span class="spyglasses-count">' . sprintf(esc_html__('%d rules', 'spyglasses-ai-traffic-analytics'), esc_html($block_count)) . '</span>';
+        echo '<p class="description">' . esc_html__('Specific patterns, categories, or types set to block', 'spyglasses-ai-traffic-analytics') . '</p>';
         if ($block_count > 0) {
             echo '<div class="spyglasses-rules-preview">';
-            echo '<strong>' . esc_html__('Sample rules:', 'spyglasses') . '</strong> ';
+            echo '<strong>' . esc_html__('Sample rules:', 'spyglasses-ai-traffic-analytics') . '</strong> ';
             $sample_rules = array_slice($property_settings['customBlocks'], 0, 3);
             echo '<code>' . implode('</code>, <code>', array_map('esc_html', $sample_rules)) . '</code>';
             if ($block_count > 3) {
                 /* translators: %d: Number of additional rules not shown */
-                echo ' <em>' . sprintf(esc_html__('and %d more...', 'spyglasses'), esc_html($block_count - 3)) . '</em>';
+                echo ' <em>' . sprintf(esc_html__('and %d more...', 'spyglasses-ai-traffic-analytics'), esc_html($block_count - 3)) . '</em>';
             }
             echo '</div>';
         }
@@ -545,19 +545,19 @@ class Spyglasses_Admin {
         
         // Custom allow rules
         echo '<div class="spyglasses-setting-row">';
-        echo '<h4>' . esc_html__('Custom Allow Rules', 'spyglasses') . '</h4>';
+        echo '<h4>' . esc_html__('Custom Allow Rules', 'spyglasses-ai-traffic-analytics') . '</h4>';
         $allow_count = is_array($property_settings['customAllows']) ? count($property_settings['customAllows']) : 0;
         /* translators: %d: Number of allow rules */
-        echo '<span class="spyglasses-count">' . sprintf(esc_html__('%d rules', 'spyglasses'), esc_html($allow_count)) . '</span>';
-        echo '<p class="description">' . esc_html__('Specific patterns, categories, or types set to allow (override blocks)', 'spyglasses') . '</p>';
+        echo '<span class="spyglasses-count">' . sprintf(esc_html__('%d rules', 'spyglasses-ai-traffic-analytics'), esc_html($allow_count)) . '</span>';
+        echo '<p class="description">' . esc_html__('Specific patterns, categories, or types set to allow (override blocks)', 'spyglasses-ai-traffic-analytics') . '</p>';
         if ($allow_count > 0) {
             echo '<div class="spyglasses-rules-preview">';
-            echo '<strong>' . esc_html__('Sample rules:', 'spyglasses') . '</strong> ';
+            echo '<strong>' . esc_html__('Sample rules:', 'spyglasses-ai-traffic-analytics') . '</strong> ';
             $sample_rules = array_slice($property_settings['customAllows'], 0, 3);
             echo '<code>' . implode('</code>, <code>', array_map('esc_html', $sample_rules)) . '</code>';
             if ($allow_count > 3) {
                 /* translators: %d: Number of additional rules not shown */
-                echo ' <em>' . sprintf(esc_html__('and %d more...', 'spyglasses'), esc_html($allow_count - 3)) . '</em>';
+                echo ' <em>' . sprintf(esc_html__('and %d more...', 'spyglasses-ai-traffic-analytics'), esc_html($allow_count - 3)) . '</em>';
             }
             echo '</div>';
         }
@@ -641,19 +641,19 @@ class Spyglasses_Admin {
         
         if (empty($ai_referrers)) {
             echo '<div class="notice notice-info inline">';
-            echo '<p>' . esc_html__('No AI referrers available. Please sync patterns to load AI referrer sources.', 'spyglasses') . '</p>';
+            echo '<p>' . esc_html__('No AI referrers available. Please sync patterns to load AI referrer sources.', 'spyglasses-ai-traffic-analytics') . '</p>';
             echo '</div>';
             return;
         }
         
         echo '<div class="spyglasses-referrers-summary">';
         echo '<p class="description">';
-        echo esc_html__('Spyglasses tracks human visitors who arrive at your site via links in AI-generated content. These are regular visitors using browsers, not bots, so they are never blocked.', 'spyglasses');
+        echo esc_html__('Spyglasses tracks human visitors who arrive at your site via links in AI-generated content. These are regular visitors using browsers, not bots, so they are never blocked.', 'spyglasses-ai-traffic-analytics');
         echo '</p>';
         
         echo '<div class="spyglasses-referrer-count">';
         /* translators: %d: Number of AI referrer sources being tracked */
-        echo '<h4>' . sprintf(esc_html__('Tracking %d AI Referrer Sources', 'spyglasses'), esc_html(count($ai_referrers))) . '</h4>';
+        echo '<h4>' . sprintf(esc_html__('Tracking %d AI Referrer Sources', 'spyglasses-ai-traffic-analytics'), esc_html(count($ai_referrers))) . '</h4>';
         echo '</div>';
         
         echo '<div class="spyglasses-referrer-grid">';
@@ -682,7 +682,7 @@ class Spyglasses_Admin {
         if (count($ai_referrers) > 6) {
             echo '<div class="spyglasses-referrer-card spyglasses-more-card">';
             echo '<div class="spyglasses-more-count">+' . esc_html(count($ai_referrers) - 6) . '</div>';
-            echo '<div class="spyglasses-referrer-name">' . esc_html__('More sources', 'spyglasses') . '</div>';
+            echo '<div class="spyglasses-referrer-name">' . esc_html__('More sources', 'spyglasses-ai-traffic-analytics') . '</div>';
             echo '</div>';
         }
         
@@ -759,7 +759,7 @@ class Spyglasses_Admin {
         $logo_url = SPYGLASSES_PLUGIN_URL . 'assets/images/spyglasses-logo.webp';
         $logo_attributes = array(
             'src' => esc_url($logo_url),
-            'alt' => esc_attr__('Spyglasses Logo', 'spyglasses'),
+            'alt' => esc_attr__('Spyglasses Logo', 'spyglasses-ai-traffic-analytics'),
             'style' => 'max-width: 200px; height: auto;'
         );
         

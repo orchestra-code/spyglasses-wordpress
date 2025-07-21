@@ -1,4 +1,4 @@
-=== Spyglasses ===
+=== Spyglasses - AI Traffic Analytics ===
 Contributors: spyglasses
 Tags: ai analytics, ai seo, ai visits, ai agents, analytics
 Requires at least: 5.0
@@ -8,7 +8,7 @@ Stable tag: 1.1.7
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-AI traffic detection and analytics for WordPress. Detect and monitor traffic from AI assistants like ChatGPT, Claude, Perplexity. Block AI model trainers.
+AI traffic analytics for WordPress. Detect and monitor traffic from AI assistants like ChatGPT, Claude, Perplexity.
 
 == Description ==
 
@@ -47,7 +47,7 @@ Spyglasses only collects information about AI-related traffic, not about your re
 
 1. Upload the `spyglasses` folder to the `/wp-content/plugins/` directory
 2. Activate the plugin through the 'Plugins' menu in WordPress
-3. Go to Settings > Spyglasses to configure the plugin
+3. Go to Settings > Spyglasses - AI Traffic Analytics to configure the plugin
 4. Enter your Spyglasses API key
 5. That's it! Spyglasses will now detect and monitor AI-related traffic to your site
 6. Configure blocking rules in your Spyglasses dashboard at [spyglasses.io](https://www.spyglasses.io/app)
