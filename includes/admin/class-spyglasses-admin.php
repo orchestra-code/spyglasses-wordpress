@@ -23,11 +23,210 @@ class Spyglasses_Admin {
         // Register settings
         add_action('admin_init', array($this, 'register_settings'));
 
+        // Enqueue admin styles
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_styles'));
+
         // Add settings link on plugins page
         add_filter('plugin_action_links_' . plugin_basename(SPYGLASSES_PLUGIN_DIR . 'spyglasses.php'), array($this, 'add_settings_link'));
         
         // Handle manual pattern sync
         add_action('admin_init', array($this, 'handle_manual_pattern_sync'));
+    }
+
+    /**
+     * Enqueue admin styles
+     */
+    public function enqueue_admin_styles($hook) {
+        // Only load on our admin page
+        if ('toplevel_page_spyglasses' !== $hook) {
+            return;
+        }
+        
+        // Enqueue a dummy style handle to attach our inline styles to
+        wp_enqueue_style('spyglasses-admin-base', false, array(), SPYGLASSES_VERSION);
+        
+        // Add our inline styles
+        wp_add_inline_style('spyglasses-admin-base', $this->get_admin_css());
+    }
+
+    /**
+     * Get admin CSS styles
+     */
+    private function get_admin_css() {
+        return '
+            .spyglasses-admin-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+                padding: 15px;
+                background: #fff;
+                border: 1px solid #ccd0d4;
+                border-radius: 4px;
+            }
+            
+            .spyglasses-logo img {
+                max-height: 50px;
+            }
+            
+            .spyglasses-header-actions .button {
+                margin-left: 10px;
+            }
+            
+            .spyglasses-admin-footer {
+                margin-top: 30px;
+                padding: 20px;
+                background: #fff;
+                border: 1px solid #ccd0d4;
+                border-radius: 4px;
+            }
+            
+            .spyglasses-features {
+                list-style-type: disc;
+                margin-left: 20px;
+            }
+            
+            .spyglasses-features li {
+                margin-bottom: 10px;
+            }
+            
+            .pattern-stats {
+                margin-top: 15px;
+                padding: 10px;
+                background: #f9f9f9;
+                border: 1px solid #eee;
+                border-radius: 4px;
+            }
+            
+            .pattern-stats h4 {
+                margin-top: 0;
+                margin-bottom: 10px;
+            }
+            
+            .pattern-stats ul {
+                margin: 0;
+                list-style-type: disc;
+                padding-left: 20px;
+            }
+            
+            .spyglasses-central-settings {
+                background: #fff;
+                border: 1px solid #ccd0d4;
+                border-radius: 4px;
+                padding: 15px;
+                margin-top: 10px;
+            }
+            
+            .spyglasses-setting-row {
+                padding: 10px 0;
+                border-bottom: 1px solid #eee;
+            }
+            
+            .spyglasses-setting-row:last-child {
+                border-bottom: none;
+            }
+            
+            .spyglasses-setting-row h4 {
+                margin: 0 0 5px 0;
+                display: inline-block;
+            }
+            
+            .spyglasses-status {
+                padding: 3px 8px;
+                border-radius: 3px;
+                font-size: 0.85em;
+                font-weight: 600;
+                margin-left: 10px;
+            }
+            
+            .spyglasses-status.blocked {
+                background-color: #dc3232;
+                color: #fff;
+            }
+            
+            .spyglasses-status.allowed {
+                background-color: #46b450;
+                color: #fff;
+            }
+            
+            .spyglasses-count {
+                background-color: #f0f0f1;
+                padding: 3px 8px;
+                border-radius: 3px;
+                font-size: 0.85em;
+                margin-left: 10px;
+            }
+            
+            .spyglasses-rules-preview {
+                margin-top: 5px;
+                padding: 8px;
+                background-color: #f9f9f9;
+                border-radius: 3px;
+                font-size: 0.9em;
+            }
+            
+            .spyglasses-rules-preview code {
+                background: none;
+                padding: 0;
+            }
+            
+            .spyglasses-referrers-summary {
+                background: #fff;
+                border: 1px solid #ccd0d4;
+                border-radius: 4px;
+                padding: 15px;
+                margin-top: 10px;
+            }
+            
+            .spyglasses-referrer-count h4 {
+                margin: 10px 0;
+                color: #1d2327;
+            }
+            
+            .spyglasses-referrer-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 15px;
+                margin-top: 15px;
+            }
+            
+            .spyglasses-referrer-card {
+                text-align: center;
+                padding: 15px;
+                border: 1px solid #e5e5e5;
+                border-radius: 4px;
+                background: #fafafa;
+            }
+            
+            .spyglasses-referrer-logo {
+                max-width: 40px;
+                max-height: 40px;
+                margin-bottom: 8px;
+            }
+            
+            .spyglasses-referrer-name {
+                font-weight: 600;
+                font-size: 0.9em;
+                margin-bottom: 3px;
+            }
+            
+            .spyglasses-referrer-company {
+                font-size: 0.8em;
+                color: #666;
+            }
+            
+            .spyglasses-more-card {
+                background: #f0f0f1;
+                border-style: dashed;
+            }
+            
+            .spyglasses-more-count {
+                font-size: 1.5em;
+                font-weight: 600;
+                color: #666;
+                margin-bottom: 5px;
+            }
+        ';
     }
 
     /**
@@ -412,63 +611,6 @@ class Spyglasses_Admin {
                 </p>
             </div>
         </div>
-        
-        <style>
-            .spyglasses-admin-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 20px;
-                padding: 15px;
-                background: #fff;
-                border: 1px solid #ccd0d4;
-                border-radius: 4px;
-            }
-            
-            .spyglasses-logo img {
-                max-height: 50px;
-            }
-            
-            .spyglasses-header-actions .button {
-                margin-left: 10px;
-            }
-            
-            .spyglasses-admin-footer {
-                margin-top: 30px;
-                padding: 20px;
-                background: #fff;
-                border: 1px solid #ccd0d4;
-                border-radius: 4px;
-            }
-            
-            .spyglasses-features {
-                list-style-type: disc;
-                margin-left: 20px;
-            }
-            
-            .spyglasses-features li {
-                margin-bottom: 10px;
-            }
-            
-            .pattern-stats {
-                margin-top: 15px;
-                padding: 10px;
-                background: #f9f9f9;
-                border: 1px solid #eee;
-                border-radius: 4px;
-            }
-            
-            .pattern-stats h4 {
-                margin-top: 0;
-                margin-bottom: 10px;
-            }
-            
-            .pattern-stats ul {
-                margin: 0;
-                list-style-type: disc;
-                padding-left: 20px;
-            }
-        </style>
         <?php
     }
 
@@ -564,72 +706,6 @@ class Spyglasses_Admin {
         echo '</div>';
         
         echo '</div>'; // End central settings
-        
-        // Add styling
-        ?>
-        <style>
-            .spyglasses-central-settings {
-                background: #fff;
-                border: 1px solid #ccd0d4;
-                border-radius: 4px;
-                padding: 15px;
-                margin-top: 10px;
-            }
-            
-            .spyglasses-setting-row {
-                padding: 10px 0;
-                border-bottom: 1px solid #eee;
-            }
-            
-            .spyglasses-setting-row:last-child {
-                border-bottom: none;
-            }
-            
-            .spyglasses-setting-row h4 {
-                margin: 0 0 5px 0;
-                display: inline-block;
-            }
-            
-            .spyglasses-status {
-                padding: 3px 8px;
-                border-radius: 3px;
-                font-size: 0.85em;
-                font-weight: 600;
-                margin-left: 10px;
-            }
-            
-            .spyglasses-status.blocked {
-                background-color: #dc3232;
-                color: #fff;
-            }
-            
-            .spyglasses-status.allowed {
-                background-color: #46b450;
-                color: #fff;
-            }
-            
-            .spyglasses-count {
-                background-color: #f0f0f1;
-                padding: 3px 8px;
-                border-radius: 3px;
-                font-size: 0.85em;
-                margin-left: 10px;
-            }
-            
-            .spyglasses-rules-preview {
-                margin-top: 5px;
-                padding: 8px;
-                background-color: #f9f9f9;
-                border-radius: 3px;
-                font-size: 0.9em;
-            }
-            
-            .spyglasses-rules-preview code {
-                background: none;
-                padding: 0;
-            }
-        </style>
-        <?php
     }
     
     /**
@@ -688,68 +764,6 @@ class Spyglasses_Admin {
         
         echo '</div>'; // End referrer grid
         echo '</div>'; // End referrers summary
-        
-        // Add styling
-        ?>
-        <style>
-            .spyglasses-referrers-summary {
-                background: #fff;
-                border: 1px solid #ccd0d4;
-                border-radius: 4px;
-                padding: 15px;
-                margin-top: 10px;
-            }
-            
-            .spyglasses-referrer-count h4 {
-                margin: 10px 0;
-                color: #1d2327;
-            }
-            
-            .spyglasses-referrer-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-                gap: 15px;
-                margin-top: 15px;
-            }
-            
-            .spyglasses-referrer-card {
-                text-align: center;
-                padding: 15px;
-                border: 1px solid #e5e5e5;
-                border-radius: 4px;
-                background: #fafafa;
-            }
-            
-            .spyglasses-referrer-logo {
-                max-width: 40px;
-                max-height: 40px;
-                margin-bottom: 8px;
-            }
-            
-            .spyglasses-referrer-name {
-                font-weight: 600;
-                font-size: 0.9em;
-                margin-bottom: 3px;
-            }
-            
-            .spyglasses-referrer-company {
-                font-size: 0.8em;
-                color: #666;
-            }
-            
-            .spyglasses-more-card {
-                background: #f0f0f1;
-                border-style: dashed;
-            }
-            
-            .spyglasses-more-count {
-                font-size: 1.5em;
-                font-weight: 600;
-                color: #666;
-                margin-bottom: 5px;
-            }
-        </style>
-        <?php
     }
 
     /**

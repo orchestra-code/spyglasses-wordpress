@@ -88,8 +88,9 @@ class Spyglasses {
      */
     public function init() {
         try {
-            // Set up custom log file
-            $this->log_file = WP_CONTENT_DIR . '/spyglasses-debug.log';
+            // Set up custom log file in uploads directory
+            $upload_dir = wp_upload_dir();
+            $this->log_file = $upload_dir['basedir'] . '/spyglasses-debug.log';
             
             // Get settings with error handling
             $this->api_key = get_option('spyglasses_api_key', '');
@@ -229,7 +230,8 @@ class Spyglasses {
     private function write_to_wp_debug_log($message) {
         if (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
             // Use WordPress's internal debugging mechanism
-            $log_file = WP_CONTENT_DIR . '/debug.log';
+            $upload_dir = wp_upload_dir();
+            $log_file = $upload_dir['basedir'] . '/debug.log';
             
             // Use WP_Filesystem to check writability
             global $wp_filesystem;
@@ -238,7 +240,8 @@ class Spyglasses {
                 WP_Filesystem();
             }
             
-            if ($wp_filesystem && $wp_filesystem->is_writable(WP_CONTENT_DIR)) {
+            $upload_dir_path = $upload_dir['basedir'];
+            if ($wp_filesystem && $wp_filesystem->is_writable($upload_dir_path)) {
                 $timestamp = current_time('c');
                 $formatted_message = "[{$timestamp}] PHP: {$message}\n";
                 

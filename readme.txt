@@ -4,13 +4,15 @@ Tags: ai analytics, ai seo, ai visits, ai agents, analytics
 Requires at least: 5.0
 Tested up to: 6.8
 Requires PHP: 7.2
-Stable tag: 1.1.7
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 AI traffic analytics for WordPress. Detect and monitor traffic from AI assistants like ChatGPT, Claude, Perplexity.
 
 == Description ==
+
+**Important: This plugin requires a free account with Spyglasses.** Sign up at [spyglasses.io](https://www.spyglasses.io) to get your API key. By using this plugin, you agree to our [Terms of Service](https://www.spyglasses.io/legal/terms) and [Privacy Policy](https://www.spyglasses.io/legal/privacy-policy).
 
 Spyglasses provides advanced detection for AI agents, bots, and AI referrer traffic that interacts with your WordPress site. 
 
@@ -42,6 +44,52 @@ When AI-related traffic is detected, information about the visit is securely sen
 ### Privacy & Transparency
 
 Spyglasses only collects information about AI-related traffic, not about your regular human visitors. All code is open source and available for review on GitHub.
+
+== External Services ==
+
+This plugin connects to external Spyglasses API services to provide AI traffic detection and analytics functionality. **A Spyglasses account is required for the plugin to work.**
+
+### Spyglasses Pattern API
+
+**What it does:** Downloads the latest AI agent detection patterns to keep your site's bot detection up-to-date.
+
+**API Endpoint:** https://www.spyglasses.io/api/patterns
+
+**Data sent:** Your API key for authentication
+
+**When:** Daily automatic sync (if enabled) or manual sync from plugin settings
+
+**Purpose:** Ensures your site can detect the newest AI agents and bots as they emerge
+
+### Spyglasses Collector API
+
+**What it does:** Receives and processes data about AI agent and other bot visits to your website for analytics and reporting.
+
+**API Endpoint:** https://www.spyglasses.io/api/collect
+
+**Data sent when an AI agent or bot is detected:**
+* IP Address of the AI agent/bot
+* User Agent string of the AI agent/bot  
+* URL/web page that was visited
+* HTTP request headers from the AI agent/bot
+* Request method (GET, POST, etc.)
+* Response status code and timing
+* Referrer information (if available)
+* Timestamp of the visit
+
+**When:** Only when traffic matching AI agent or bot patterns is detected on your site
+
+**Purpose:** Provides analytics dashboard showing AI traffic patterns, blocked requests, and detailed visitor logs
+
+**Important:** No data about regular human visitors is collected or sent. Only traffic that matches known AI agent patterns triggers data collection.
+
+### Service Provider
+
+Both services are provided by Orchestra AI, Inc.:
+
+* **Website:** [spyglasses.io](https://www.spyglasses.io)
+* **Terms of Service:** [spyglasses.io/legal/terms](https://www.spyglasses.io/legal/terms)
+* **Privacy Policy:** [spyglasses.io/legal/privacy-policy](https://www.spyglasses.io/legal/privacy-policy)
 
 == Installation ==
 
@@ -94,7 +142,7 @@ By default, Spyglasses automatically syncs agent detection patterns daily from o
 
 = How do I troubleshoot issues with Spyglasses? =
 
-If you encounter problems, enable "Debug Mode" in the Spyglasses settings page. This creates a detailed debug log at `wp-content/spyglasses-debug.log` with information about plugin operations, pattern loading, and detection events.
+If you encounter problems, enable "Debug Mode" in the Spyglasses settings page. This creates a detailed debug log at `wp-content/uploads/spyglasses-debug.log` with information about plugin operations, pattern loading, and detection events.
 
 You can also enable WordPress debug logging by adding these lines to your wp-config.php:
 ```
@@ -102,9 +150,7 @@ define('WP_DEBUG', true);
 define('WP_DEBUG_LOG', true);
 ```
 
-After reproducing the issue, check both the Spyglasses debug log and the WordPress debug log (usually at `wp-content/debug.log`) for error messages. Look for messages starting with "Spyglasses:" and share them with support if needed.
-
-After reproducing the issue, check the debug.log file for messages starting with "Spyglasses:" and share them with support if needed.
+After reproducing the issue, check both the Spyglasses debug log and the WordPress debug log (usually at `wp-content/uploads/debug.log`) for error messages. Look for messages starting with "Spyglasses:" and share them with support if needed.
 
 Remember to disable debug logging when you have fixed the issue, as excessive logging can affect site performance.
 
@@ -117,6 +163,11 @@ Remember to disable debug logging when you have fixed the issue, as excessive lo
 5. AI referrer tracking
 
 == Changelog ==
+
+= 1.2.0 =
+* Adjusted script tags to conform to Wordpress guidance
+* Updated readme to clarify an account on Spyglasses is needed
+* Adjusted how log files are generated for debugging
 
 = 1.1.7 =
 * Revised slug to better describe the plugin
