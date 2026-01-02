@@ -409,11 +409,27 @@ class Spyglasses {
                 return;
             }
 
-            // Skip WordPress cron requests (simple URL check) - sanitize REQUEST_URI
+            // Skip WordPress internal requests and non-page paths - sanitize REQUEST_URI
             $request_uri = isset($_SERVER['REQUEST_URI']) ? sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI'])) : '';
-            if (strpos($request_uri, 'wp-cron.php') !== false) {
-                $this->debug_log('Skipping detection - WordPress cron request');
-                return;
+            
+            // Paths that don't represent real page visits
+            $skip_patterns = array(
+                '/xmlrpc',
+                '/wp-admin',
+                '/wp-login',
+                '/wp-json',
+                '/robots.txt',
+                '/sitemap',
+                '/wp-content',
+                '/wp-includes',
+                'wp-cron.php',
+            );
+            
+            foreach ($skip_patterns as $pattern) {
+                if (strpos($request_uri, $pattern) !== false) {
+                    $this->debug_log('Skipping detection - internal/non-page request: ' . $pattern);
+                    return;
+                }
             }
 
             // Get user agent and referrer - sanitize server variables

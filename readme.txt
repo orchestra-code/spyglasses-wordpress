@@ -2,9 +2,9 @@
 Contributors: spyglasses
 Tags: ai analytics, ai seo, ai visits, ai agents, analytics
 Requires at least: 5.0
-Tested up to: 6.8
+Tested up to: 6.9
 Requires PHP: 7.2
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -163,6 +163,10 @@ Remember to disable debug logging when you have fixed the issue, as excessive lo
 5. AI referrer tracking
 
 == Changelog ==
+
+= 1.2.1 =
+* Tested against WordPress 6.9
+* Now ignores XMLRPC, wp-admin, and other requests that don't represent external user page views by default
 
 = 1.2.0 =
 * Adjusted script tags to conform to Wordpress guidance
